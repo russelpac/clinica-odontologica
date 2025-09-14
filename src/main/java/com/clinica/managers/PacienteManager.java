@@ -17,18 +17,18 @@ public class PacienteManager implements ICrud<Paciente>{
         return pacientes;
     }
     @Override
-    public void actualizar(int ID, Paciente pacienteActualizado ){
-        if(ID >= 0 && ID < pacientes.size()){
-            pacientes.set(ID, pacienteActualizado);
+    public void actualizar(int id, Paciente pacienteActualizado ){
+        if(id >= 0 && id < pacientes.size()){
+            pacientes.set(id, pacienteActualizado);
             System.out.println("Paciente Actualizado");
         }else{
             System.out.println("ID no valido, no se pudo actualizar");
         }
     }
     @Override
-    public void eliminar(int ID){
-        if(ID >= 0 && ID < pacientes.size()){
-            pacientes.remove(ID);
+    public void eliminar(int id){
+        if(id >= 0 && id < pacientes.size()){
+            pacientes.remove(id);
             System.out.println("Paciente eliminado");
         }else{
             System.out.println("ID no valido, no se pudo eliminar");
