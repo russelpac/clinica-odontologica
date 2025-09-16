@@ -10,7 +10,7 @@ public class PagosManager implements ICrud<Pagos>{
     @Override
     public void agregar(Pagos pago){
         pagos.add(pago);
-        System.out.println("pago agregado correctamente: "+pago.getID());
+        System.out.println("Pago agregado correctamente: "+pago.getID());
     }
     @Override
     public List<Pagos> listar(){
@@ -29,7 +29,7 @@ public class PagosManager implements ICrud<Pagos>{
     public void eliminar(int id){
         if(id >= 0 && id < pagos.size()){
             pagos.remove(id);
-            System.out.println("pago eliminado");
+            System.out.println("Pago eliminado");
         }else{
             System.out.println("id no valido, no se pudo eliminar");
     }

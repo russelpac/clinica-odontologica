@@ -4,6 +4,6 @@ import java.util.List;
 public interface ICrud<T>{
     void agregar (T obj);
     List<T> listar();
-    void actualizar(int ID, T obj);
-    void eliminar(int ID);
+    void actualizar(int id, T obj);
+    void eliminar(int id);
 }
