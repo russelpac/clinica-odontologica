@@ -48,7 +48,7 @@ public class Main
         System.out.println("=================================");
         System.out.println("1. Registrar paciente");
         System.out.println("2. Listar pacientes");
-        System.out.println("3. Actualizar pacinte");
+        System.out.println("3. Actualizar paciente");
         System.out.println("4. Eliminar paciente");
         System.out.println("5. <-Volver al menu principal");
         System.out.println("Seleccione una opcion válida: ");
@@ -118,12 +118,11 @@ public class Main
                 ""
         );
         manager.agregar(nuevo);
-        System.out.println("Paciente agragado correctamente");
     }
-    private static void listarPacientes(PacienteManager manager){
+    private static void listarPacientes(PacienteManager manager){//al listar el paciente nos devuelve su ID
         System.out.println("--- LISTA DE PACIENTES REGISTRADOS ---");
         for(Paciente p : manager.listar()){
-            System.out.println(p);
+            System.out.println(p.getNombres());
         }
     }
     private static void actualizarPaciente(Scanner sc, PacienteManager manager){
