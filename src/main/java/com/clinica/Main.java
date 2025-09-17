@@ -1,6 +1,7 @@
 package com.clinica;
 import com.clinica.managers.PacienteManager;
 import com.clinica.modelos.Paciente;
+import java.time.LocalDate;
 import java.util.Scanner;
 public class Main 
 {
@@ -55,14 +56,94 @@ public class Main
         sc.nextLine();
         switch(opcion){
             case 1:{
-            
+                registrarPaciente(sc, pacienteManager);
+                break;
+            }
+            case 2:{
+                listarPacientes(pacienteManager);
+                break;
+            }
+            case 3:{
+                actualizarPaciente(sc,pacienteManager);
+                break;
+            }
+            case 4:{
+                eliminarPaciente(sc,pacienteManager);
+            }
+            case 5:{
+                System.out.println("Volviendo al menu principal");
+                break;
+            }
+            default:{
+                System.out.println("Escoja una opcion valida");
+                break;
             }
         
         }
-    }while(opcion != 5 );
-           
+    }while(opcion != 5 );        
+  }
+    //funciones principales pacientes
+    private static void registrarPaciente(Scanner sc, PacienteManager manager){
+        System.out.print("Nombres: ");
+        String nombres = sc.nextLine();
+        System.out.print("Apellidos: ");
+        String apellidos = sc.nextLine();
+        System.out.print("CI: ");
+        String ci =sc.nextLine();
+        System.out.print("Numero de contacto: ");
+        String numero = sc.nextLine();
+        System.out.print("Sexo: ");
+        String sexo = sc.nextLine();
+        System.out.print("Año de nacimiento: ");
+        int anio = sc.nextInt();
+        System.out.print("Mes: ");
+        int mes = sc.nextInt();
+        System.out.print("Dia: ");
+        int dia = sc.nextInt();
+        sc.nextLine();
+        LocalDate fechaNacimiento = LocalDate.of(anio,mes,dia);
+        
+        Paciente nuevo = new Paciente(
+                java.util.UUID.randomUUID().toString(), //ID generado aleatorio
+                nombres,
+                ci,
+                apellidos,
+                numero,
+                fechaNacimiento,
+                "",
+                "",
+                sexo,
+                "",
+                "",
+                ""
+        );
+        manager.agregar(nuevo);
+        System.out.println("Paciente agragado correctamente");
     }
-    
- 
+    private static void listarPacientes(PacienteManager manager){
+        System.out.println("--- LISTA DE PACIENTES REGISTRADOS ---");
+        for(Paciente p : manager.listar()){
+            System.out.println(p);
+        }
+    }
+    private static void actualizarPaciente(Scanner sc, PacienteManager manager){
+        System.out.print("Ingrese el ID del paciente para actualizar: ");
+        String id = sc.nextLine();
+        Paciente paciente = manager.getById(id);
+        if(paciente == null){
+            System.out.println("Paciente no encontrado");
+            return;
+        }
+        //actualizamos el numero de contacto VAMOS A AMPLIAR ESTE CAMPO
+        System.out.print("Nuevo numero de contacto: ");
+        String nuevoContacto = sc.nextLine();
+        paciente.setNumeroContacto(nuevoContacto);
+        manager.actualizarPorId(id, paciente);
+    }
+    private static void eliminarPaciente(Scanner sc, PacienteManager manager){
+        System.out.print("Ingrese ID del apciente a eliminar: ");
+        String id = sc.nextLine();
+        manager.eliminarPorId(id);//revisar
+    }
 }
 
