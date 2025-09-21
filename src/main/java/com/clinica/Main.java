@@ -18,8 +18,9 @@ public class Main
            System.out.println("=======CLINICA ODONTOLOGIA======");
            System.out.println("================================");
            System.out.println("1. Gestion de Pacientes->");
-           //iremos añadiendo la gestion de odontologos, pagos, generar informes en pdf, imprimir expedientes
-           System.out.println("2. Salir");
+           //iremos aï¿½adiendo la gestion de odontologos, pagos, generar informes en pdf, imprimir expedientes
+           system.out.println("2. Gestion de Odontologos->");
+           System.out.println("3. Salir");
            System.out.print("Seleccione una opcion valida: ");
            opcion = sc.nextInt();
            sc.nextLine();
@@ -29,8 +30,11 @@ public class Main
                    break;
                }
                case 2: {
-                   System.out.println("Saliendo del Sistema");
+                   menuOdontologos(sc,odontologosManager);
                    break;
+               }
+               case 3: {
+                    System.out.println("Saliendo del Sistema")
                }
                default: {
                    System.out.println("Opcion no valida");
@@ -51,7 +55,7 @@ public class Main
         System.out.println("3. Actualizar paciente");
         System.out.println("4. Eliminar paciente");
         System.out.println("5. <-Volver al menu principal");
-        System.out.println("Seleccione una opcion válida: ");
+        System.out.println("Seleccione una opcion vï¿½lida: ");
         opcion = sc.nextInt();
         sc.nextLine();
         switch(opcion){
@@ -94,7 +98,7 @@ public class Main
         String numero = sc.nextLine();
         System.out.print("Sexo: ");
         String sexo = sc.nextLine();
-        System.out.print("Año de nacimiento: ");
+        System.out.print("Aï¿½o de nacimiento: ");
         int anio = sc.nextInt();
         System.out.print("Mes: ");
         int mes = sc.nextInt();
@@ -144,5 +148,28 @@ public class Main
         String id = sc.nextLine();
         manager.eliminarPorId(id);//revisar
     }
+    private static void menuOdontologos(Scanner sc, odontologosManager manager){
+    int opcion ;
+    do{
+        System.out.print("==============================");
+        System.out.print("======MENU DE ODONTOLOGOS=====")
+        System.out.print("==============================");
+        System.out.print("1.Ingresar odontologo");
+        System.out.print("2. Listar odontologos ");
+        System.out.print("3. Actualizar odontologo");
+        System.out.print("4. Eliminar odontologo");
+        System.out.print("5. <-Volver al menu principal ");
+        switch(opcion){
+            case 1:{
+                
+                break;
+            }
+
+
+        }
+
+    }while(opcion != )
+    
+    }    
 }
 
