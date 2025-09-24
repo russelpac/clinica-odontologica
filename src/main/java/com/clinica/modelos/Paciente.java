@@ -4,7 +4,7 @@ import java.time.LocalDate;
 //import java.util.UUID;
 
 public class Paciente implements Serializable  {
-    private final String ID;//para que no se pueda modificar una vex ya construido
+    private final String ID;//para que no se pueda modificar una vez ya construido
     private String nombres;
     private String CI;
     private String apellidos;

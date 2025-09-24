@@ -32,7 +32,7 @@ public class PacienteManager implements ICrud<Paciente>{
             System.out.println("Paciente eliminado");
         }else{
             System.out.println("ID no valido, no se pudo eliminar");
-    }
+        }
   }
     //metodos externos del PacienteManager
     public Paciente getById(String id){

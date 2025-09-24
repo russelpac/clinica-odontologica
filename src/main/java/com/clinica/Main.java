@@ -1,6 +1,13 @@
 package com.clinica;
 import com.clinica.managers.PacienteManager;
 import com.clinica.modelos.Paciente;
+import com.clinica.managers.OdontologoManager;
+import com.clinica.modelos.Odontologo;
+import com.clinica.managers.PagosManager;
+import com.clinica.modelos.Pagos;
+import java.time.LocalDateTime;
+import java.math.BigDecimal;
+import java.util.List;
 import java.time.LocalDate;
 import java.util.Scanner;
 public class Main 
@@ -9,7 +16,8 @@ public class Main
     {
        Scanner sc = new Scanner(System.in);
        PacienteManager pacienteManager = new PacienteManager();
-       
+       OdontologoManager odontologoManager = new OdontologoManager();
+       PagosManager pagosManager = new PagosManager();
        int opcion;
        do { //ESTE SERA EL MENU PRINCIPAL
            System.out.println("================================");
@@ -18,9 +26,10 @@ public class Main
            System.out.println("=======CLINICA ODONTOLOGIA======");
            System.out.println("================================");
            System.out.println("1. Gestion de Pacientes->");
-           //iremos a�adiendo la gestion de odontologos, pagos, generar informes en pdf, imprimir expedientes
-           system.out.println("2. Gestion de Odontologos->");
-           System.out.println("3. Salir");
+           //iremos añadiendo la gestion de odontologos, pagos, generar informes en pdf, imprimir expedientes
+           System.out.println("2. Gestion de Odontologos->");
+           System.out.println("3. Gestion de Pagos->");
+           System.out.println("4. Salir");
            System.out.print("Seleccione una opcion valida: ");
            opcion = sc.nextInt();
            sc.nextLine();
@@ -30,18 +39,18 @@ public class Main
                    break;
                }
                case 2: {
-                   menuOdontologos(sc,odontologosManager);
+                   menuOdontologos(sc,odontologoManager);
                    break;
                }
                case 3: {
-                    System.out.println("Saliendo del Sistema")
+                    menuPagos(sc,pagosManager,pacienteManager);
                }
                default: {
                    System.out.println("Opcion no valida");
                    break;
                }
            }
-       }while (opcion != 2);
+       }while (opcion != 4);
        sc.close();
     }
     private static void menuPacientes(Scanner sc, PacienteManager pacienteManager){
@@ -55,7 +64,7 @@ public class Main
         System.out.println("3. Actualizar paciente");
         System.out.println("4. Eliminar paciente");
         System.out.println("5. <-Volver al menu principal");
-        System.out.println("Seleccione una opcion v�lida: ");
+        System.out.println("Seleccione una opcion valida: ");
         opcion = sc.nextInt();
         sc.nextLine();
         switch(opcion){
@@ -85,9 +94,10 @@ public class Main
         
         }
     }while(opcion != 5 );        
-  }
+    }
     //funciones principales pacientes
     private static void registrarPaciente(Scanner sc, PacienteManager manager){
+        System.out.println("---INGRESANDO UN PACIENTE---");
         System.out.print("Nombres: ");
         String nombres = sc.nextLine();
         System.out.print("Apellidos: ");
@@ -98,7 +108,7 @@ public class Main
         String numero = sc.nextLine();
         System.out.print("Sexo: ");
         String sexo = sc.nextLine();
-        System.out.print("A�o de nacimiento: ");
+        System.out.print("Año de nacimiento: ");
         int anio = sc.nextInt();
         System.out.print("Mes: ");
         int mes = sc.nextInt();
@@ -144,32 +154,229 @@ public class Main
         manager.actualizarPorId(id, paciente);
     }
     private static void eliminarPaciente(Scanner sc, PacienteManager manager){
-        System.out.print("Ingrese ID del apciente a eliminar: ");
+        System.out.print("Ingrese ID del paciente a eliminar: ");
         String id = sc.nextLine();
         manager.eliminarPorId(id);//revisar
     }
-    private static void menuOdontologos(Scanner sc, odontologosManager manager){
+    private static void menuOdontologos(Scanner sc, OdontologoManager odontologoManager){
     int opcion ;
     do{
         System.out.print("==============================");
-        System.out.print("======MENU DE ODONTOLOGOS=====")
+        System.out.print("======MENU DE ODONTOLOGOS=====");
         System.out.print("==============================");
         System.out.print("1.Ingresar odontologo");
         System.out.print("2. Listar odontologos ");
         System.out.print("3. Actualizar odontologo");
         System.out.print("4. Eliminar odontologo");
         System.out.print("5. <-Volver al menu principal ");
+        opcion=sc.nextInt();
+        sc.nextLine();
         switch(opcion){
             case 1:{
-                
+                registrarOdontologo(sc, odontologoManager);
                 break;
             }
-
-
+            case 2:{
+                listarOdontologos(odontologoManager);
+                break;
+            }
+            case 3:{
+                actualizarOdontologo(sc, odontologoManager);
+                break;
+            }
+            case 4:{
+                eliminarOdontologo(sc,odontologoManager);
+                break;
+            }
+            case 5:{
+                System.out.println("Volviendo al menu principal");
+                break;
+            }
+            default:{
+                System.out.println("Escoja una opcion valida");
+                break;
+            }
         }
-
-    }while(opcion != )
+    }while(opcion != 5);
+    }
+    private static void registrarOdontologo(Scanner sc, OdontologoManager manager){
+    System.out.println("---INGRESANDO UN ODONTOLOGO---");
+    System.out.print("Nombre completo: ");
+    String nombre = sc.nextLine();
+    System.out.print("Numero de contacto: ");
+    String numero = sc.nextLine();
+    System.out.print("Especialidad: ");
+    String especialidad = sc.nextLine();
     
-    }    
+    Odontologo nuevo = new Odontologo(
+        nombre,
+        numero,
+        especialidad,
+        java.util.UUID.randomUUID().toString()
+    ); 
+    manager.agregar(nuevo);
+    }
+    private static void listarOdontologos(OdontologoManager manager){
+    System.out.println("--- LISTA DE PACIENTES REGISTRADOS ---");
+    for(Odontologo o : manager.listar()){
+        System.out.println(o.getNombre());
+    }
+    }
+    private static void actualizarOdontologo(Scanner sc, OdontologoManager manager){
+    System.out.println("Ingrese el ID del paciente para actualizar");
+    String id = sc.nextLine();
+    Odontologo odontologo = manager.getById(id);
+    if(odontologo == null){
+        System.out.println("Paciente no encontrado");
+        return;
+    }
+    System.out.print("Nuevo numero de contacto: ");
+    String nuevoContacto = sc.nextLine();
+    odontologo.setNumero_de_celular(nuevoContacto);
+    manager.actualizarPorId(id, odontologo);
+    }
+    private static void eliminarOdontologo(Scanner sc, OdontologoManager manager){
+    System.out.println("Ingrese ID del odontologo a eliminar");
+    String id = sc.nextLine();
+    manager.eliminarPorId(id);
+    }
+    private static void menuPagos(Scanner sc, PagosManager pagosManager, PacienteManager pacienteManager){
+    int opcion;
+    do{
+        System.out.println("======================================");
+        System.out.println("=========GESTION DE PAGOS=========");
+        System.out.println("======================================");
+        System.out.println("1. Registrar pago");
+        System.out.println("2. Listar pagos");
+        System.out.println("3. Actualizar pago");
+        System.out.println("4. Eliminar pago");
+        System.out.println("5. <-Volver al menu principal");
+        System.out.println("Seleccione una opcion valida");
+        opcion = sc.nextInt();
+        sc.nextLine();
+        switch(opcion){
+            case 1:{
+                registrarPago(sc, pagosManager, pacienteManager);
+                break;
+            }
+            case 2:{
+                listarPagos(pagosManager, pacienteManager);
+                break;
+            }
+            case 3:{
+                actualizarPago(sc, pagosManager);
+                break;
+            }
+            case 4:{
+                eliminarPago(sc, pagosManager);
+                break;
+            }
+            case 5:{
+                System.out.println("Volviendo al menu principal");
+                break;
+            }
+            default:{
+                System.out.println("Seleccione una opcion valida");
+                break;
+            }
+        }
+    }while(opcion != 5);
+    }
+    private static void registrarPago(Scanner sc, PagosManager pagosManager, PacienteManager pacienteManager){
+        System.out.println("---REGISTRANDO UN PAGO---");
+        List<Paciente> pacientes = pacienteManager.listar();
+        if(pacientes.isEmpty()){
+            System.out.println("No hay pacientes registrado. Registre un paciente primero ");
+            return;
+        }
+        
+        System.out.println("Seleccione el paciente para el pago: ");
+        for(int i = 0; i < pacientes.size(); i++){
+            Paciente p = pacientes.get(i);
+            System.out.println((i+1)+" . "+p.getNombres()+" "+p.getApellidos()+" (CI: " + p.getCI() + ")");
+        
+        }
+        
+        int idx;
+        while(true){
+            System.out.println("Ingrese el numero del paciente: ");
+            String line = sc.nextLine().trim();
+            try{
+                idx = Integer.parseInt(line);
+                if(idx < 1 || idx > pacientes.size()){
+                    System.out.println("Opcion fuera del rango. Intente nuevamente. ");
+                    continue;
+                }
+                break;
+            }catch(NumberFormatException ex){
+                System.out.println("Entrada invalida. Ingrese un numero");
+            }
+        }
+        Paciente pacienteSeleccionado = pacientes.get(idx - 1);
+        BigDecimal monto;
+        while(true){
+            System.out.println("Ingrese el monto (ej. 150.50): ");
+            String montoStr = sc.nextLine().trim();
+            try{
+                montoStr = montoStr.replace(",",".");
+                monto = new BigDecimal(montoStr);
+                if(monto.compareTo(BigDecimal.ZERO) <= 0){
+                    System.out.println("El monto debe ser mayor a 0");
+                    continue;
+                }
+                break;
+            }catch(NumberFormatException | ArithmeticException ex){
+                System.out.println("Monto invalido. Intente de nuevo");
+            }
+        }
+        Pagos.MetodoPago metodo;
+        while(true){
+            System.out.println("Seleccione metodo de pago: ");
+            System.out.println("1) EFECTIVO");
+            System.out.println("2) TRANSFERENCIA");
+            System.out.println("Opcion: ");
+            String mline = sc.nextLine().trim();
+            if (mline.equals("1")) { metodo = Pagos.MetodoPago.EFECTIVO; break; }
+            if (mline.equals("2")) { metodo = Pagos.MetodoPago.TRANSFERENCIA; break; }
+            System.out.println("Opcion no valida. Intente de nuevo");
+        }
+        Pagos.EstadoPago estado = Pagos.EstadoPago.PENDIENTE;
+        String pagoID = java.util.UUID.randomUUID().toString();
+        LocalDateTime ahora = LocalDateTime.now();
+        
+        Pagos pago = new Pagos(
+                pagoID,
+                pacienteSeleccionado.getID(),
+                ahora,
+                monto,
+                metodo,
+                estado
+        );
+        pagosManager.agregar(pago);
+        System.out.printf("✅ pago registrado: %s %s - Monto: %s - Metodo: %s%n",
+                pacienteSeleccionado.getNombres(),
+                pacienteSeleccionado.getApellidos(),
+                monto.toPlainString(),
+                metodo);
+    }
+    private static void listarPagos(PagosManager pagosManager, PacienteManager pacienteManager){
+        List<Pagos> pagos = pagosManager.listar();
+        if(pagos.isEmpty()){
+            System.out.println("No hay pagos registrados");
+            return;
+        }
+        System.out.println("---LISTA DE PAGOS---");
+        for(Pagos p : pagos){
+            Paciente pac = pacienteManager.getById(p.getPacienteID());
+            String nombrePaciente = (pac != null) ? pac.getNombres() + " " + pac.getApellidos(): "Paciente no encontrado";
+            System.out.printf("ID Pago: %s | Paciente: %s | Fecha: %s | Monto: %s | Metodo: %s | Estado: %s%n",
+                    p.getID(),
+                    nombrePaciente,
+                    p.getFecha().toString(),
+                    p.getMonto().toPlainString(),
+                    p.getMetodo(),
+                    p.getEstado());
+        }
+    }
 }
 

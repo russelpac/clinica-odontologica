@@ -32,6 +32,33 @@ public class OdontologoManager implements ICrud<Odontologo>{
             System.out.println("Odontologo eliminado");
         }else{
             System.out.println("id no valido, no se pudo eliminar");
-    }
-  }
+        }
+   }
+   //funciones extra
+   public Odontologo getById(String id){
+       for(Odontologo o : odontologos){
+           if(o.getID().equals(id))return o;
+       }
+       return null;
+   }
+   public void actualizarPorId(String id, Odontologo odontologoActualizado){
+       for(int i = 0; i < odontologos.size(); i++){
+           if(odontologos.get(i).getID().equals(id)){
+               odontologos.set(i,odontologoActualizado);
+               System.out.println("Paciente actualizado correctamente");
+               return;
+           }
+       }
+       System.out.println("No se encontro paciente con ID: " + id);
+   }
+   public void eliminarPorId(String id){
+       for(int i = 0; i < odontologos.size(); i++){
+           if(odontologos.get(i).getID().equals(id)){
+               odontologos.remove(i);
+               System.out.println("Paciente eliminado correctamente");
+               return;
+           }
+       }
+       System.out.println("No se encontro paciente con ID: "+id);
+   }
 }
