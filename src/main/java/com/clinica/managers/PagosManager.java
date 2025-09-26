@@ -1,5 +1,5 @@
 package com.clinica.managers;
-
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import com.clinica.modelos.Pagos;
@@ -34,4 +34,48 @@ public class PagosManager implements ICrud<Pagos>{
             System.out.println("id no valido, no se pudo eliminar");
     }
   }
+    //metodos aparte
+    public Pagos getById(String id){
+        for(Pagos p : pagos){
+            if(p.getID().equals(id)) return p;
+        }
+        return null;
+    }
+    public boolean actualizarPorId(String id, BigDecimal nuevoMonto, Pagos.MetodoPago nuevoMetodo, Pagos.EstadoPago nuevoEstado){
+        for(int i = 0; i < pagos.size(); i++){
+            Pagos p = pagos.get(i);
+            if(p.getID().equals(id)){
+                if(nuevoMonto != null) p.setMonto(nuevoMonto);
+                if(nuevoMetodo != null)p.setMetodo(nuevoMetodo);
+                if(nuevoEstado != null)p.setEstado(nuevoEstado);
+                pagos.set(i, p);
+                return true;
+            }
+        }
+        return false;
+    }
+    public boolean eliminadPorId(String id){
+        for(int i = 0; i < pagos.size(); i++){
+            Pagos p = pagos.get(i);
+            if(p.getID().equals(id)){
+                if(p.getEstado() == Pagos.EstadoPago.ANULADO){
+                //si ya esta anulado no se hace nada, asi para tener historial
+                return false;
+            }
+            p.setEstado(Pagos.EstadoPago.ANULADO);
+            pagos.set(i,p);
+            return true;
+            }
+        }
+    return false;
+    }
+    public boolean eliminarFisicoPorId(String id){
+        for(int i = 0; i < pagos.size(); i++){
+            if(pagos.get(i).getID().equals(id)){
+                pagos.remove(i);
+                return true;
+            }
+        }
+    return false;
+    }
 }

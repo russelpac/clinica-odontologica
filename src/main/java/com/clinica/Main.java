@@ -249,8 +249,9 @@ public class Main
         System.out.println("1. Registrar pago");
         System.out.println("2. Listar pagos");
         System.out.println("3. Actualizar pago");
-        System.out.println("4. Eliminar pago");
-        System.out.println("5. <-Volver al menu principal");
+        System.out.println("4. Anular pago");
+        System.out.println("5. Elimianr pago");
+        System.out.println("6. <-Volver al menu principal");
         System.out.println("Seleccione una opcion valida");
         opcion = sc.nextInt();
         sc.nextLine();
@@ -264,14 +265,18 @@ public class Main
                 break;
             }
             case 3:{
-                actualizarPago(sc, pagosManager);
+                actualizarPago(sc, pagosManager, pacienteManager);
                 break;
             }
             case 4:{
-                eliminarPago(sc, pagosManager);
+                anularPago(sc, pagosManager);
                 break;
             }
             case 5:{
+                eliminarPago(sc, pagosManager);
+                break;
+            }
+            case 6:{
                 System.out.println("Volviendo al menu principal");
                 break;
             }
@@ -280,7 +285,7 @@ public class Main
                 break;
             }
         }
-    }while(opcion != 5);
+    }while(opcion != 6);
     }
     private static void registrarPago(Scanner sc, PagosManager pagosManager, PacienteManager pacienteManager){
         System.out.println("---REGISTRANDO UN PAGO---");
@@ -376,6 +381,189 @@ public class Main
                     p.getMonto().toPlainString(),
                     p.getMetodo(),
                     p.getEstado());
+        }
+    }
+    private static void actualizarPago(Scanner sc, PagosManager pagosManager, PacienteManager pacienteManager) {
+        System.out.println("\n--- ACTUALIZAR PAGO ---");
+        List<Pagos> lista = pagosManager.listar();
+        if (lista.isEmpty()) {
+            System.out.println("No hay pagos registrados.");
+            return;
+        }
+        System.out.println("Pagos registrados:");
+        for (int i = 0; i < lista.size(); i++) {
+            Pagos p = lista.get(i);
+            String pacienteNombre = "Paciente no encontrado";
+        if (pacienteManager != null) {
+            Paciente pac = pacienteManager.getById(p.getPacienteID());
+            if (pac != null) pacienteNombre = pac.getNombres() + " " + pac.getApellidos();
+        }
+        String idCorto = p.getID().length() > 8 ? p.getID().substring(0, 8) : p.getID();
+        System.out.printf("%d) ID:%s | Paciente:%s | Monto:%s | Metodo:%s | Estado:%s%n",
+            i + 1,
+            idCorto,
+            pacienteNombre,
+            p.getMonto().toPlainString(),
+            p.getMetodo(),
+            p.getEstado());
+        }
+        System.out.print("Ingrese el número del pago o el ID completo del pago que desea actualizar: ");
+        String entrada = sc.nextLine().trim();
+        String pagoId = null;
+
+        if (entrada.isEmpty()) {
+            System.out.println("Entrada vacía. Cancelando actualización.");
+            return;
+        }
+
+    // Si es numeeo entonces obtener por índice
+        try {
+            int opc = Integer.parseInt(entrada);
+            if (opc >= 1 && opc <= lista.size()) {
+                pagoId = lista.get(opc - 1).getID();
+            }else {
+                System.out.println("Número fuera de rango.");
+                return;
+            }
+        } catch (NumberFormatException e) {
+            pagoId = entrada;
+        }
+
+        Pagos pago = pagosManager.getById(pagoId);
+        if (pago == null) {
+            System.out.println("No se encontró un pago con ese ID.");
+            return;
+        }
+
+        System.out.println("IMPORTANTE: Dejar vacío y presionar Enter para no modificar un campo.");
+        BigDecimal nuevoMonto = null;
+        System.out.printf("Monto actual: %s. Nuevo monto: ", pago.getMonto().toPlainString());
+        String montoStr = sc.nextLine().trim();
+        if (!montoStr.isEmpty()) {
+            try {
+                montoStr = montoStr.replace(",", ".");
+                BigDecimal m = new BigDecimal(montoStr);
+                if (m.compareTo(BigDecimal.ZERO) <= 0) {
+                    System.out.println("Monto inválido (debe ser > 0). Cancelando actualización.");
+                    return;
+                }
+                nuevoMonto = m;
+            }catch (Exception ex) {
+                System.out.println("Formato de monto inválido. Cancelando actualización.");
+                return;
+            }
+        }
+        Pagos.MetodoPago nuevoMetodo = null;
+        System.out.println("Método actual: " + pago.getMetodo());
+        System.out.println("Opciones método: 1) EFECTIVO  2) TRANSFERENCIA  3) TARJETA");
+        System.out.print("Elija nuevo método (o Enter para mantener): ");
+        String metodoStr = sc.nextLine().trim();
+        if (!metodoStr.isEmpty()) {
+            switch (metodoStr) {
+                case "1":{ nuevoMetodo = Pagos.MetodoPago.EFECTIVO;
+                break;
+                }
+                case "2":{ nuevoMetodo = Pagos.MetodoPago.TRANSFERENCIA;
+                break;
+                }
+                default :{
+                    try {
+                        nuevoMetodo = Pagos.MetodoPago.valueOf(metodoStr.toUpperCase());
+                    } catch (Exception ex) {
+                        System.out.println("Opción de método inválida. Cancelando actualización.");
+                        return;
+                    }
+                }
+            }
+        }
+        Pagos.EstadoPago nuevoEstado = null;
+        System.out.println("Estado actual: " + pago.getEstado());
+        System.out.println("Opciones estado: 1) PENDIENTE  2) PAGADO  3) ANULADO");
+        System.out.print("Elija nuevo estado (o Enter para mantener): ");
+        String estadoStr = sc.nextLine().trim();
+        if (!estadoStr.isEmpty()) {
+            switch (estadoStr) {
+                case "1" :{ nuevoEstado = Pagos.EstadoPago.PENDIENTE;
+                break;
+                }
+                case "2" :{ nuevoEstado = Pagos.EstadoPago.PAGADO;
+                break;
+                }
+                case "3" :{ nuevoEstado = Pagos.EstadoPago.ANULADO;
+                break;
+                }
+                default : {
+                    try {
+                        nuevoEstado = Pagos.EstadoPago.valueOf(estadoStr.toUpperCase());
+                    } catch (Exception ex) {
+                        System.out.println("Opción de estado inválida. Cancelando actualización.");
+                        return;
+                    }
+                }
+            }
+        }
+
+        boolean ok = pagosManager.actualizarPorId(pagoId, nuevoMonto, nuevoMetodo, nuevoEstado);
+        if (ok) {
+            System.out.println("✅ Pago actualizado correctamente.");
+        } else {
+            System.out.println("❌ No se pudo actualizar el pago (ID no encontrado o error).");
+        }
+    }
+    private static void anularPago(Scanner sc, PagosManager manager){
+        System.out.println("--- ANULAR PAGO ---");
+        System.out.println("ingrese el ID del pago para anular: ");
+        String id = sc.nextLine();
+        Pagos pago = manager.getById(id);
+        if(pago == null){
+            System.out.println("No existe un pago con ese ID");
+            return;
+        }
+        System.out.println("Sen encontro el siguiente pago: ");
+        System.out.println("ID: "+pago.getID() + 
+                           "| PacienteID: "+pago.getPacienteID()+
+                           "| Monto: "+
+                           "| Estado: "+ pago.getEstado());
+        System.out.println("¿Desea anular este pago? (S/N)");
+        String confirm = sc.nextLine().toUpperCase();
+        
+        if(confirm.equals("S")){
+            boolean exito = manager.eliminadPorId(id);
+            if(exito){
+                System.out.println("✅ El pago ha sido anulado correctamente.");
+            }else {
+                System.out.println("⚠️ El pago ya estaba anulado previamente.");
+            }
+        }else {
+            System.out.println("Operación cancelada por el ususario.");
+        }
+    }
+    private static void eliminarPago(Scanner sc, PagosManager manager){
+        System.out.println("--- ELIMINAR PAGO ---");
+        System.out.println("ingrese el ID del pago a eliminar: ");
+        String id = sc.nextLine();
+        Pagos pago = manager.getById(id);
+        if(pago == null){
+            System.out.println("No existe un pago con ese ID");
+            return;
+        }
+        System.out.println("Sen encontro el siguiente pago: ");
+        System.out.println("ID: "+pago.getID() + 
+                           "| PacienteID: "+pago.getPacienteID()+
+                           "| Monto: "+
+                           "| Estado: "+ pago.getEstado());
+        System.out.println("¿Desea anular este pago? (S/N)");
+        String confirm = sc.nextLine().toUpperCase();
+        
+        if(confirm.equals("S")){
+            boolean exito = manager.eliminarFisicoPorId(id);
+            if(exito){
+                System.out.println("✅ El pago ha sido anulado correctamente.");
+            }else {
+                System.out.println("⚠️ El pago ya estaba anulado previamente.");
+            }
+        }else {
+            System.out.println("Operación cancelada por el ususario.");
         }
     }
 }
