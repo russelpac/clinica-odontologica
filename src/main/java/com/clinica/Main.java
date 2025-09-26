@@ -21,7 +21,7 @@ public class Main
        int opcion;
        do { //ESTE SERA EL MENU PRINCIPAL
            System.out.println("================================");
-           System.out.println("=========MENU PRINCIPAL=========");
+           System.out.println("\033[1;34m=========MENU PRINCIPALj=========\033[0m");
            System.out.println("================================");
            System.out.println("=======CLINICA ODONTOLOGIA======");
            System.out.println("================================");
@@ -565,6 +565,11 @@ public class Main
         }else {
             System.out.println("Operación cancelada por el ususario.");
         }
+    }
+    //metodo para limpiar las consola 
+    public static void limpiarConsola(){
+        System.out.print("\\033[H\\033[2J");
+        System.out.flush();
     }
 }
 
