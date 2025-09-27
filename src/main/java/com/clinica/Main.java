@@ -19,14 +19,14 @@ public class Main
        OdontologoManager odontologoManager = new OdontologoManager();
        PagosManager pagosManager = new PagosManager();
        int opcion;
+       limpiarConsola();
        do { //ESTE SERA EL MENU PRINCIPAL
            System.out.println("================================");
-           System.out.println("\033[1;34m=========MENU PRINCIPALj=========\033[0m");
+           System.out.println("=========MENU PRINCIPAL=========");
            System.out.println("================================");
            System.out.println("=======CLINICA ODONTOLOGIA======");
            System.out.println("================================");
            System.out.println("1. Gestion de Pacientes->");
-           //iremos añadiendo la gestion de odontologos, pagos, generar informes en pdf, imprimir expedientes
            System.out.println("2. Gestion de Odontologos->");
            System.out.println("3. Gestion de Pagos->");
            System.out.println("4. Salir");
@@ -44,9 +44,14 @@ public class Main
                }
                case 3: {
                     menuPagos(sc,pagosManager,pacienteManager);
+                    break;
+               }
+               case 4:{
+                    System.out.println("Saliendo del menú");
+                    break;
                }
                default: {
-                   System.out.println("Opcion no valida");
+                   System.out.println("Opción no valida");
                    break;
                }
            }
@@ -55,16 +60,17 @@ public class Main
     }
     private static void menuPacientes(Scanner sc, PacienteManager pacienteManager){
     int opcion;
+    limpiarConsola();
     do{
         System.out.println("=================================");
         System.out.println("=======GESTION DE PACIENTES======");
         System.out.println("=================================");
-        System.out.println("1. Registrar paciente");
-        System.out.println("2. Listar pacientes");
-        System.out.println("3. Actualizar paciente");
-        System.out.println("4. Eliminar paciente");
+        System.out.println("1. Registrar paciente");//Aprobado
+        System.out.println("2. Listar pacientes");//Aprobado
+        System.out.println("3. Actualizar paciente");//Aprobado
+        System.out.println("4. Eliminar paciente");//Aprobado
         System.out.println("5. <-Volver al menu principal");
-        System.out.println("Seleccione una opcion valida: ");
+        System.out.print("Seleccione una opcion valida: ");
         opcion = sc.nextInt();
         sc.nextLine();
         switch(opcion){
@@ -73,7 +79,7 @@ public class Main
                 break;
             }
             case 2:{
-                listarPacientes(pacienteManager);
+                listarPacientes(sc,pacienteManager);
                 break;
             }
             case 3:{
@@ -84,7 +90,7 @@ public class Main
                 eliminarPaciente(sc,pacienteManager);
             }
             case 5:{
-                System.out.println("Volviendo al menu principal");
+                limpiarConsola();
                 break;
             }
             default:{
@@ -97,6 +103,7 @@ public class Main
     }
     //funciones principales pacientes
     private static void registrarPaciente(Scanner sc, PacienteManager manager){
+        limpiarConsola();
         System.out.println("---INGRESANDO UN PACIENTE---");
         System.out.print("Nombres: ");
         String nombres = sc.nextLine();
@@ -116,30 +123,48 @@ public class Main
         int dia = sc.nextInt();
         sc.nextLine();
         LocalDate fechaNacimiento = LocalDate.of(anio,mes,dia);
-        
+        System.out.print("Ingrese un contacto de emergencias: ");
+        String contactoEmergencias = sc.nextLine();
+        System.out.print("Ingrese la direccion del paciente: ");
+        String direccion = sc.nextLine();
+        System.out.println("===Ingrese las alergias del paciente===");
+        String alergias=sc.nextLine();
+        System.out.println("===Ingrese antecedentes medicos del paciente(habitos relevantes, mediacamentos actuales, cirugias previas)===");
+        String antecMedicos = sc.nextLine();
+        System.out.println("===Ingrese el motivo de consulta del paciente===");
+        String consultas=sc.nextLine();
+        LocalDateTime fechaConsulta = LocalDateTime.now();
         Paciente nuevo = new Paciente(
-                java.util.UUID.randomUUID().toString(), //ID generado aleatorio
+                java.util.UUID.randomUUID().toString().substring(0,8), //ID generado aleatorio
                 nombres,
                 ci,
                 apellidos,
                 numero,
                 fechaNacimiento,
-                "",
-                "",
+                alergias,
+                consultas,
                 sexo,
-                "",
-                "",
-                ""
+                contactoEmergencias,
+                direccion,
+                antecMedicos,
+                fechaConsulta
         );
         manager.agregar(nuevo);
+        limpiarConsola();
     }
-    private static void listarPacientes(PacienteManager manager){//al listar el paciente nos devuelve su ID
+    private static void listarPacientes(Scanner sc,PacienteManager manager){//al listar el paciente nos devuelve su ID
+        limpiarConsola();
         System.out.println("--- LISTA DE PACIENTES REGISTRADOS ---");
         for(Paciente p : manager.listar()){
-            System.out.println(p.getNombres());
+            System.out.println("Paciente: "+p.getNombres()+" "+p.getApellidos());
+            System.out.println("ID del paciente: "+p.getID());
         }
+        System.out.println("Presione ENTER para continuar...");
+        sc.nextLine();
+        limpiarConsola();
     }
     private static void actualizarPaciente(Scanner sc, PacienteManager manager){
+        limpiarConsola();
         System.out.print("Ingrese el ID del paciente para actualizar: ");
         String id = sc.nextLine();
         Paciente paciente = manager.getById(id);
@@ -147,28 +172,92 @@ public class Main
             System.out.println("Paciente no encontrado");
             return;
         }
-        //actualizamos el numero de contacto VAMOS A AMPLIAR ESTE CAMPO
-        System.out.print("Nuevo numero de contacto: ");
+        System.out.println("IMPORTANTE: Dejar vacío y presionar Enter para no modificar un campo.");
+        System.out.print("Actualizando nombres (" + paciente.getNombres()+") : ");
+        String nuevosNombres = sc.nextLine();
+        if(!nuevosNombres.isEmpty())paciente.setNombres(nuevosNombres);
+        
+        System.out.print("Actualizando apellidos (" + paciente.getApellidos()+") : ");
+        String nuevosApellidos = sc.nextLine();
+        if(!nuevosApellidos.isEmpty())paciente.setApellidos(nuevosApellidos);
+        
+        System.out.print("Actualizando CI (" + paciente.getCI()+") : ");
+        String nuevoCI = sc.nextLine();
+        if(!nuevoCI.isEmpty())paciente.setCI(nuevoCI);
+        
+        System.out.print("Actualizando numero de contacto (" + paciente.getContactoEmergencias()+") : ");
         String nuevoContacto = sc.nextLine();
-        paciente.setNumeroContacto(nuevoContacto);
+        if(!nuevoContacto.isEmpty())paciente.setNumeroContacto(nuevoContacto);
+        
+        System.out.print("Actualizando sexo (" + paciente.getSexo()+") : ");
+        String nuevoSexo = sc.nextLine();
+        if(!nuevoSexo.isEmpty())paciente.setSexo(nuevoSexo);
+        
+        System.out.println("Fecha de nacimiento actual: " + paciente.getFechaNacimiento());
+        System.out.print("¿Desea actualizar la fecha? (s/n): ");
+        String opcion = sc.nextLine();
+        if(opcion.equalsIgnoreCase("s")){
+            System.out.print("Año de nacimiento actualizado: ");
+            int anioNuevo = sc.nextInt();
+            System.out.print("Mes de nacimiento actualizado: ");
+            int mesNuevo = sc.nextInt();
+            System.out.print("Dia de nacimiento actualizado: ");
+            int diaNuevo = sc.nextInt();
+            sc.nextLine();
+            try{
+                LocalDate fechaNacimientoNueva = LocalDate.of(anioNuevo,mesNuevo,diaNuevo);
+                paciente.setFechaNacimiento(fechaNacimientoNueva);
+            }catch(Exception e){
+                System.out.println("⚠️ Fecha inválida, se conserva la anterior.");
+            } 
+        }
+        
+        System.out.print("Actuallizando contacto de emergencias ("+paciente.getContactoEmergencias()+" ): ");
+        String contactoNuevo = sc.nextLine();
+        if(!contactoNuevo.isEmpty())paciente.setContatoEmergencias(contactoNuevo);
+        
+        System.out.println("Actuallizando direccion de paciente ("+paciente.getDireccion()+" )");
+        String direccionNueva = sc.nextLine();
+        if(!direccionNueva.isEmpty())paciente.setDireccion(direccionNueva);
+        
+        System.out.println("Actuallizando las alergias del paciente ("+paciente.getAlergias()+" )");
+        String alergiasNuevas = sc.nextLine();
+        if(!alergiasNuevas.isEmpty())paciente.setAlergias(alergiasNuevas);
+        
+        System.out.println("Actuallizando antecedentes del paciente ("+paciente.getAntecMedicos()+" )");
+        String AntecMedicosNuevos = sc.nextLine();
+        if(!AntecMedicosNuevos.isEmpty())paciente.setAntecMedicos(AntecMedicosNuevos);
+ 
+        System.out.println("Actuallizando el motivo de consulta ("+paciente.getConsultas()+" )");
+        String consultaNueva = sc.nextLine();
+        if(!consultaNueva.isEmpty())paciente.setConsultas(consultaNueva);
+        
         manager.actualizarPorId(id, paciente);
+        System.out.println("Presione ENTER para continuar...");
+        sc.nextLine();
+        limpiarConsola();
     }
     private static void eliminarPaciente(Scanner sc, PacienteManager manager){
+        limpiarConsola();
         System.out.print("Ingrese ID del paciente a eliminar: ");
         String id = sc.nextLine();
-        manager.eliminarPorId(id);//revisar
+        manager.eliminarPorId(id);
+        System.out.println("Presione ENTER para continuar...");
+        sc.nextLine();
     }
     private static void menuOdontologos(Scanner sc, OdontologoManager odontologoManager){
     int opcion ;
+    limpiarConsola();
     do{
-        System.out.print("==============================");
-        System.out.print("======MENU DE ODONTOLOGOS=====");
-        System.out.print("==============================");
-        System.out.print("1.Ingresar odontologo");
-        System.out.print("2. Listar odontologos ");
-        System.out.print("3. Actualizar odontologo");
-        System.out.print("4. Eliminar odontologo");
-        System.out.print("5. <-Volver al menu principal ");
+        System.out.println("==============================");
+        System.out.println("======MENU DE ODONTOLOGOS=====");
+        System.out.println("==============================");
+        System.out.println("1. Ingresar odontologo");//revision
+        System.out.println("2. Listar odontologos ");
+        System.out.println("3. Actualizar odontologo");
+        System.out.println("4. Eliminar odontologo");
+        System.out.println("5. <-Volver al menu principal ");
+        System.out.print("Ingrese una opcion valida: ");
         opcion=sc.nextInt();
         sc.nextLine();
         switch(opcion){
@@ -189,7 +278,7 @@ public class Main
                 break;
             }
             case 5:{
-                System.out.println("Volviendo al menu principal");
+                limpiarConsola();
                 break;
             }
             default:{
@@ -200,46 +289,47 @@ public class Main
     }while(opcion != 5);
     }
     private static void registrarOdontologo(Scanner sc, OdontologoManager manager){
-    System.out.println("---INGRESANDO UN ODONTOLOGO---");
-    System.out.print("Nombre completo: ");
-    String nombre = sc.nextLine();
-    System.out.print("Numero de contacto: ");
-    String numero = sc.nextLine();
-    System.out.print("Especialidad: ");
-    String especialidad = sc.nextLine();
+        limpiarConsola();
+        System.out.println("---INGRESANDO UN ODONTOLOGO---");
+        System.out.print("Nombre completo: ");
+        String nombre = sc.nextLine();
+        System.out.print("Numero de contacto: ");
+        String numero = sc.nextLine();
+        System.out.print("Especialidad: ");
+        String especialidad = sc.nextLine();
     
-    Odontologo nuevo = new Odontologo(
-        nombre,
-        numero,
-        especialidad,
-        java.util.UUID.randomUUID().toString()
-    ); 
-    manager.agregar(nuevo);
+        Odontologo nuevo = new Odontologo(
+            nombre,
+            numero,
+            especialidad,
+            java.util.UUID.randomUUID().toString()
+        ); 
+        manager.agregar(nuevo);
     }
     private static void listarOdontologos(OdontologoManager manager){
-    System.out.println("--- LISTA DE PACIENTES REGISTRADOS ---");
-    for(Odontologo o : manager.listar()){
-        System.out.println(o.getNombre());
-    }
+        System.out.println("--- LISTA DE PACIENTES REGISTRADOS ---");
+        for(Odontologo o : manager.listar()){
+            System.out.println(o.getNombre());
+        }
     }
     private static void actualizarOdontologo(Scanner sc, OdontologoManager manager){
-    System.out.println("Ingrese el ID del paciente para actualizar");
-    String id = sc.nextLine();
-    Odontologo odontologo = manager.getById(id);
-    if(odontologo == null){
-        System.out.println("Paciente no encontrado");
-        return;
-    }
-    System.out.print("Nuevo numero de contacto: ");
-    String nuevoContacto = sc.nextLine();
-    odontologo.setNumero_de_celular(nuevoContacto);
-    manager.actualizarPorId(id, odontologo);
+        System.out.println("Ingrese el ID del paciente para actualizar");
+        String id = sc.nextLine();
+        Odontologo odontologo = manager.getById(id);
+        if(odontologo == null){
+            System.out.println("Paciente no encontrado");
+            return;
+        }
+        System.out.print("Nuevo numero de contacto: ");
+        String nuevoContacto = sc.nextLine();
+        odontologo.setNumero_de_celular(nuevoContacto);
+        manager.actualizarPorId(id, odontologo);
     }
     private static void eliminarOdontologo(Scanner sc, OdontologoManager manager){
-    System.out.println("Ingrese ID del odontologo a eliminar");
-    String id = sc.nextLine();
-    manager.eliminarPorId(id);
-    }
+        System.out.println("Ingrese ID del odontologo a eliminar");
+        String id = sc.nextLine();
+        manager.eliminarPorId(id);
+        }
     private static void menuPagos(Scanner sc, PagosManager pagosManager, PacienteManager pacienteManager){
     int opcion;
     do{
@@ -567,9 +657,18 @@ public class Main
         }
     }
     //metodo para limpiar las consola 
-    public static void limpiarConsola(){
-        System.out.print("\\033[H\\033[2J");
-        System.out.flush();
+    private static void limpiarConsola(){
+        try{
+            String sistema = System.getProperty("os.name");
+            if(sistema.contains("Windows")){
+                new ProcessBuilder("cmd", "/c", "cls").inheritIO().start().waitFor();
+            }else{
+                new ProcessBuilder("clear").inheritIO().start().waitFor();
+            }
+        
+        }catch (Exception e){
+            System.out.println("No se limpio la consola");
+        }
     }
 }
 

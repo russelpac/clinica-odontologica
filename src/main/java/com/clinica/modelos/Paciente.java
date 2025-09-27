@@ -1,6 +1,7 @@
 package com.clinica.modelos;
 import java.io.Serializable;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 //import java.util.UUID;
 
 public class Paciente implements Serializable  {
@@ -17,9 +18,10 @@ public class Paciente implements Serializable  {
     private String direccion;
     private String antecMedicos;
     private Boolean activo = true;
+    private final LocalDateTime fechaConsulta;
 
 public Paciente(String ID, String nombres, String CI, String apellidos, String numeroContacto,LocalDate fechaNacimiento, String alergias, String consultas,String sexo,
-String contactoEmergencias,String direccion, String antecMedicos) {
+String contactoEmergencias,String direccion, String antecMedicos,LocalDateTime fechaConsulta) {
     
     this.ID = ID;
     this.nombres = nombres;
@@ -32,7 +34,8 @@ String contactoEmergencias,String direccion, String antecMedicos) {
     this.sexo = sexo;
     this.contactoEmergencias = contactoEmergencias;
     this.direccion = direccion;
-    this.antecMedicos = antecMedicos; 
+    this.antecMedicos = antecMedicos;
+    this.fechaConsulta = fechaConsulta;
 }
 //GETERS
 public String getID(){
@@ -74,6 +77,9 @@ public String getAntecMedicos(){
 }
 public Boolean isActivo(){
     return activo;
+}
+public LocalDateTime getFechaConsulta(){
+    return fechaConsulta;
 }
 //SETERS
 public void setNombres(String nombres){
