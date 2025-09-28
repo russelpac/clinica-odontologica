@@ -10,7 +10,7 @@ public class PagosManager implements ICrud<Pagos>{
     @Override
     public void agregar(Pagos pago){
         pagos.add(pago);
-        System.out.println("Pago agregado correctamente: "+pago.getID());
+        System.out.println("Pago agregado correctamente, ID del pago : "+pago.getID());
     }
     @Override
     public List<Pagos> listar(){
