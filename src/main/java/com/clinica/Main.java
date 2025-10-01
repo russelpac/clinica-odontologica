@@ -12,14 +12,16 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.DateTimeException;
 import java.util.Scanner;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+import java.sql.Statement;
+
 public class Main 
 {
     public static void main( String[] args )
     {
        Scanner sc = new Scanner(System.in);
-       PacienteManager pacienteManager = new PacienteManager();
-       OdontologoManager odontologoManager = new OdontologoManager();
-       PagosManager pagosManager = new PagosManager();
        int opcion;
        limpiarConsola();
        do { //ESTE SERA EL MENU PRINCIPAL
@@ -37,16 +39,36 @@ public class Main
            sc.nextLine();
            switch(opcion){
                case 1: {
-                   menuPacientes(sc,pacienteManager);
+                   try (Connection conn = DriverManager.getConnection("jdbc:sqlite:clinica.db")) {
+                   try (Statement s = conn.createStatement()) { s.execute("PRAGMA foreign_keys = ON"); }
+                        PacienteManager pacienteManager = new PacienteManager(conn);
+                        menuPacientes(sc, pacienteManager);
+                   } catch (SQLException ex) {
+                   ex.printStackTrace();
+                   }
                    break;
                }
                case 2: {
-                   menuOdontologos(sc,odontologoManager);
+                   try (Connection conn = DriverManager.getConnection("jdbc:sqlite:clinica.db")) {
+                   try (Statement s = conn.createStatement()) { s.execute("PRAGMA foreign_keys = ON"); }
+                        OdontologoManager odontologoManager = new OdontologoManager(conn);
+                        menuOdontologos(sc, odontologoManager);
+                   } catch (SQLException ex) {
+                   ex.printStackTrace();
+                   }
                    break;
                }
                case 3: {
-                    menuPagos(sc, pagosManager, pacienteManager, odontologoManager);
-                    break;
+                   try (Connection conn = DriverManager.getConnection("jdbc:sqlite:clinica.db")) {
+                   try (Statement s = conn.createStatement()) { s.execute("PRAGMA foreign_keys = ON"); }
+                        PagosManager pagosManager = new PagosManager(conn);
+                        PacienteManager pacienteManager = new PacienteManager(conn);
+                        OdontologoManager odontologoManager = new OdontologoManager(conn);
+                        menuPagos(sc, pagosManager, pacienteManager, odontologoManager);
+                   } catch (SQLException ex) {
+                   ex.printStackTrace();
+                   }
+                   break;
                }
                case 4:{
                     System.out.println("Saliendo del menú");
@@ -90,6 +112,7 @@ public class Main
             }
             case 4:{
                 eliminarPaciente(sc,pacienteManager);
+                break;
             }
             case 5:{
                 limpiarConsola();
@@ -146,9 +169,7 @@ public class Main
         String antecMedicos = sc.nextLine();
         System.out.println("===Ingrese el motivo de consulta del paciente===");
         String consultas=sc.nextLine();
-        LocalDateTime fechaConsulta = LocalDateTime.now();//colocar en un formato entendible
-        //DateTimeFormatter formato = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
-        //fechaConsulta.format(formato)->es un string, al momento de mostraa se mostrara como string
+        LocalDateTime fechaConsulta = LocalDateTime.now();
         Paciente nuevo = new Paciente(
                 java.util.UUID.randomUUID().toString().substring(0,8), //ID generado aleatorio
                 nombres,
@@ -172,96 +193,209 @@ public class Main
     private static void listarPacientes(Scanner sc,PacienteManager manager){//al listar el paciente nos devuelve su ID
         limpiarConsola();
         System.out.println("--- LISTA DE PACIENTES REGISTRADOS ---");
-        for(Paciente p : manager.listar()){
-            System.out.println("Paciente "+p.getID()+" : "+p.getNombres()+" "+p.getApellidos());
+        List<Paciente> lista = manager.listar();
+        if (lista.isEmpty()) {
+            System.out.println("No hay pacientes registrados.");
+        } else {
+            int i = 1;
+            for (Paciente p : lista) {
+                String idCorto = p.getID() != null && p.getID().length() > 8 ? p.getID().substring(0, 8) : p.getID();
+                System.out.printf("%d) ID:%s | %s %s | CI:%s | Tel:%s | Activo:%s%n",
+                    i++,
+                    idCorto,
+                    p.getNombres() != null ? p.getNombres() : "",
+                    p.getApellidos() != null ? p.getApellidos() : "",
+                    p.getCI() != null ? p.getCI() : "",
+                    p.getNumeroContacto() != null ? p.getNumeroContacto() : "",
+                    p.isActivo() ? "Sí" : "No");
+            }
         }
+        System.out.println();
         System.out.println("Presione ENTER para continuar...");
         sc.nextLine();
         limpiarConsola();
     }
-    private static void actualizarPaciente(Scanner sc, PacienteManager manager){
+    private static void actualizarPaciente(Scanner sc, PacienteManager manager) {
         limpiarConsola();
-        System.out.print("Ingrese el ID del paciente para actualizar: ");
-        String id = sc.nextLine();
+        System.out.print("Ingrese el ID o el número mostrado en la lista del paciente para actualizar: ");
+        String entrada = sc.nextLine().trim();
+        if (entrada.isEmpty()) {
+            System.out.println("Entrada vacía. Cancelando.");
+            System.out.println("Presione ENTER para continuar");
+            sc.nextLine();
+            limpiarConsola();
+            return;
+        }
+
+        String id = entrada;
+        try {
+            int idx = Integer.parseInt(entrada);
+            List<Paciente> lista = manager.listar();
+            if (idx >= 1 && idx <= lista.size()) {
+                id = lista.get(idx - 1).getID();
+            } else {
+                System.out.println("Índice fuera de rango.");
+                System.out.println("Presione ENTER para continuar");
+                sc.nextLine();
+                limpiarConsola();
+                return;
+            }
+        } catch (NumberFormatException ex) {
+            
+        }
+
         Paciente paciente = manager.getById(id);
-        if(paciente == null){
+        if (paciente == null) {
             System.out.println("Paciente no encontrado");
             System.out.println("Presione ENTER para continuar");
             sc.nextLine();
             limpiarConsola();
             return;
         }
+
         System.out.println("IMPORTANTE: Dejar vacío y presionar Enter para no modificar un campo.");
-        System.out.print("Actualizando nombres (" + paciente.getNombres()+") : ");
-        String nuevosNombres = sc.nextLine();
-        if(!nuevosNombres.isEmpty())paciente.setNombres(nuevosNombres);
-        
-        System.out.print("Actualizando apellidos (" + paciente.getApellidos()+") : ");
-        String nuevosApellidos = sc.nextLine();
-        if(!nuevosApellidos.isEmpty())paciente.setApellidos(nuevosApellidos);
-        
-        System.out.print("Actualizando CI (" + paciente.getCI()+") : ");
-        String nuevoCI = sc.nextLine();
-        if(!nuevoCI.isEmpty())paciente.setCI(nuevoCI);
-        
-        System.out.print("Actualizando numero de contacto (" + paciente.getContactoEmergencias()+") : ");
-        String nuevoContacto = sc.nextLine();
-        if(!nuevoContacto.isEmpty())paciente.setNumeroContacto(nuevoContacto);
-        
-        System.out.print("Actualizando sexo (" + paciente.getSexo()+") : ");
-        String nuevoSexo = sc.nextLine();
-        if(!nuevoSexo.isEmpty())paciente.setSexo(nuevoSexo);
-        System.out.println("Fecha de nacimiento actual: " + paciente.getFechaNacimiento());
-        System.out.print("¿Desea actualizar la fecha? (s/n): ");
-        String opcion = sc.nextLine();
-        if(opcion.equalsIgnoreCase("s")){
-            System.out.print("Año de nacimiento actualizado: ");
-            int anioNuevo = sc.nextInt();
-            System.out.print("Mes de nacimiento actualizado: ");
-            int mesNuevo = sc.nextInt();
-            System.out.print("Dia de nacimiento actualizado: ");
-            int diaNuevo = sc.nextInt();
-            sc.nextLine();
-            try{
-                LocalDate fechaNacimientoNueva = LocalDate.of(anioNuevo,mesNuevo,diaNuevo);
-                paciente.setFechaNacimiento(fechaNacimientoNueva);
-            }catch(Exception e){
-                System.out.println(" Fecha inválida, se conserva la anterior.");
-            } 
+
+        System.out.print("Actualizando nombres (" + safe(paciente.getNombres()) + "): ");
+        String nuevosNombres = sc.nextLine().trim();
+        if (!nuevosNombres.isEmpty()) paciente.setNombres(nuevosNombres);
+
+        System.out.print("Actualizando apellidos (" + safe(paciente.getApellidos()) + "): ");
+        String nuevosApellidos = sc.nextLine().trim();
+        if (!nuevosApellidos.isEmpty()) paciente.setApellidos(nuevosApellidos);
+
+        System.out.print("Actualizando CI (" + safe(paciente.getCI()) + "): ");
+        String nuevoCI = sc.nextLine().trim();
+        if (!nuevoCI.isEmpty()) paciente.setCI(nuevoCI);
+
+        System.out.print("Actualizando número de contacto (" + safe(paciente.getNumeroContacto()) + "): ");
+        String nuevoContacto = sc.nextLine().trim();
+        if (!nuevoContacto.isEmpty()) paciente.setNumeroContacto(nuevoContacto);
+
+        System.out.print("Actualizando sexo (" + safe(paciente.getSexo()) + "): ");
+        String nuevoSexo = sc.nextLine().trim();
+        if (!nuevoSexo.isEmpty()) paciente.setSexo(nuevoSexo);
+        System.out.println("Fecha de nacimiento actual: " + (paciente.getFechaNacimiento() != null ? paciente.getFechaNacimiento() : "no definida"));
+        System.out.print("¿Desea actualizar la fecha? (s/N): ");
+        String opcion = sc.nextLine().trim();
+        if (opcion.equalsIgnoreCase("s")) {
+            System.out.print("Ingrese la nueva fecha en formato yyyy-MM-dd: ");
+            String fechaStr = sc.nextLine().trim();
+            if (!fechaStr.isEmpty()) {
+                try {
+                    LocalDate fechaNacimientoNueva = LocalDate.parse(fechaStr);
+                    paciente.setFechaNacimiento(fechaNacimientoNueva);
+                } catch (Exception e) {
+                    System.out.println("Fecha inválida. Se conserva la anterior.");
+                }
+            } else {
+                System.out.println("Entrada vacía. Se conserva la fecha anterior.");
+            }
         }
-        
-        System.out.print("Actuallizando contacto de emergencias ("+paciente.getContactoEmergencias()+" ): ");
-        String contactoNuevo = sc.nextLine();
-        if(!contactoNuevo.isEmpty())paciente.setContatoEmergencias(contactoNuevo);
-        
-        System.out.println("Actuallizando direccion de paciente ("+paciente.getDireccion()+" )");
-        String direccionNueva = sc.nextLine();
-        if(!direccionNueva.isEmpty())paciente.setDireccion(direccionNueva);
-        
-        System.out.println("Actuallizando las alergias del paciente ("+paciente.getAlergias()+" )");
-        String alergiasNuevas = sc.nextLine();
-        if(!alergiasNuevas.isEmpty())paciente.setAlergias(alergiasNuevas);
-        
-        System.out.println("Actuallizando antecedentes del paciente ("+paciente.getAntecMedicos()+" )");
-        String AntecMedicosNuevos = sc.nextLine();
-        if(!AntecMedicosNuevos.isEmpty())paciente.setAntecMedicos(AntecMedicosNuevos);
- 
-        System.out.println("Actuallizando el motivo de consulta ("+paciente.getConsultas()+" )");
-        String consultaNueva = sc.nextLine();
-        if(!consultaNueva.isEmpty())paciente.setConsultas(consultaNueva);
-        
-        manager.actualizarPorId(id, paciente);
+
+        System.out.print("Actualizando contacto de emergencias (" + safe(paciente.getContactoEmergencias()) + "): ");
+        String contactoNuevo = sc.nextLine().trim();
+        if (!contactoNuevo.isEmpty()) {
+            paciente.setContatoEmergencias(contactoNuevo);
+        }
+
+        System.out.print("Actualizando dirección (" + safe(paciente.getDireccion()) + "): ");
+        String direccionNueva = sc.nextLine().trim();
+        if (!direccionNueva.isEmpty()) paciente.setDireccion(direccionNueva);
+
+        System.out.print("Actualizando alergias (" + safe(paciente.getAlergias()) + "): ");
+        String alergiasNuevas = sc.nextLine().trim();
+        if (!alergiasNuevas.isEmpty()) paciente.setAlergias(alergiasNuevas);
+
+        System.out.print("Actualizando antecedentes médicos (" + safe(paciente.getAntecMedicos()) + "): ");
+        String AntecMedicosNuevos = sc.nextLine().trim();
+        if (!AntecMedicosNuevos.isEmpty()) paciente.setAntecMedicos(AntecMedicosNuevos);
+
+        System.out.print("Actualizando motivo de consulta (" + safe(paciente.getConsultas()) + "): ");
+        String consultaNueva = sc.nextLine().trim();
+        if (!consultaNueva.isEmpty()) paciente.setConsultas(consultaNueva);
+
+    
+        System.out.print("Activo (actual: " + (paciente.isActivo() ? "Sí" : "No") + "). Escriba S para activar, N para desactivar, Enter para mantener: ");
+        String activoStr = sc.nextLine().trim();
+        if (activoStr.equalsIgnoreCase("S")) paciente.setActivo(true);
+        else if (activoStr.equalsIgnoreCase("N")) paciente.setActivo(false);
+
+        // Ejecutar actualización en BD
+        boolean ok = manager.actualizarPorId(id, paciente);
+        if (ok) System.out.println("Paciente actualizado correctamente.");
+        else System.out.println("No se pudo actualizar el paciente (ID no encontrado o error).");
+
         System.out.println("Presione ENTER para continuar...");
         sc.nextLine();
         limpiarConsola();
     }
+    private static String safe(Object o) {
+        return o == null ? "" : o.toString();
+    }
     private static void eliminarPaciente(Scanner sc, PacienteManager manager){
         limpiarConsola();
-        System.out.print("Ingrese ID del paciente a eliminar: ");
-        String id = sc.nextLine();
-        manager.eliminarPorId(id);
+        System.out.print("Ingrese ID o número del paciente a eliminar/anular: ");
+        String entrada = sc.nextLine().trim();
+        if (entrada.isEmpty()) {
+            System.out.println("Entrada vacía. Cancelando.");
+            System.out.println("Presione ENTER para continuar...");
+            sc.nextLine();
+            limpiarConsola();
+            return;
+        }
+
+        String id = entrada;
+        try {
+            int idx = Integer.parseInt(entrada);
+            List<Paciente> lista = manager.listar();
+            if (idx >= 1 && idx <= lista.size()) {
+                id = lista.get(idx - 1).getID();
+            } else {
+                System.out.println("Índice fuera de rango.");
+                System.out.println("Presione ENTER para continuar...");
+                sc.nextLine();
+                limpiarConsola();
+                return;
+            }
+        } catch (NumberFormatException ex) {
+        }
+
+        Paciente p = manager.getById(id);
+        if (p == null) {
+            System.out.println("No se encontró paciente con ese ID.");
+            System.out.println("Presione ENTER para continuar...");
+            sc.nextLine();
+            limpiarConsola();
+            return;
+        }
+        System.out.printf("Paciente: %s %s | CI: %s | ID: %s%n", safe(p.getNombres()), safe(p.getApellidos()), safe(p.getCI()), id);
+        System.out.print("¿Confirma anular este paciente? (S/N): ");
+        String confirm = sc.nextLine().trim().toUpperCase();
+        if (!confirm.equals("S")) {
+            System.out.println("Operación cancelada.");
+            System.out.println("Presione ENTER para continuar...");
+            sc.nextLine();
+            limpiarConsola();
+            return;
+        }
+        boolean ok = manager.eliminarPorId(id);
+        if (ok) System.out.println("Paciente anulado correctamente.");
+        else System.out.println("No se pudo anular el paciente (tal vez ya estaba inactivo o ocurrió un error).");
+        System.out.print("¿Desea eliminar este paciente? (S/N): ");
+        confirm = sc.nextLine().trim().toUpperCase();
+        if (!confirm.equals("S")) {
+            System.out.println("Operación cancelada.");
+            System.out.println("Presione ENTER para continuar...");
+            sc.nextLine();
+            limpiarConsola();
+            return;
+        }
+        ok = manager.eliminarFisicoPorId(id);
+        if (ok) System.out.println("Paciente eliminado correctamente.");
+        else System.out.println("Ocurrió un error al eliminar al paciente");
         System.out.println("Presione ENTER para continuar...");
         sc.nextLine();
+        limpiarConsola();
     }
     private static void menuOdontologos(Scanner sc, OdontologoManager odontologoManager){
     int opcion ;
@@ -310,17 +444,22 @@ public class Main
         limpiarConsola();
         System.out.println("---INGRESANDO UN ODONTOLOGO---");
         System.out.print("Nombre completo: ");
-        String nombre = sc.nextLine();
+        String nombre = sc.nextLine().trim();
+        if(nombre.isEmpty()){
+            System.out.println("El nombre no puede estar vacio. Operacion cancelada.");
+            return;
+        }
         System.out.print("Numero de contacto: ");
-        String numero = sc.nextLine();
+        String numero = sc.nextLine().trim();
         System.out.print("Especialidad: ");
-        String especialidad = sc.nextLine();
+        String especialidad = sc.nextLine().trim();
+        String id = java.util.UUID.randomUUID().toString().substring(0,8);
     
         Odontologo nuevo = new Odontologo(
             nombre,
             numero,
             especialidad,
-            java.util.UUID.randomUUID().toString().substring(0,8)
+            id
         ); 
         manager.agregar(nuevo);
         System.out.println("Presione ENTER para continuar...");
@@ -329,53 +468,156 @@ public class Main
     }
     private static void listarOdontologos(Scanner sc,OdontologoManager manager){
         limpiarConsola();
-        System.out.println("--- LISTA DE ODONTOLOGOS REGISTRADOS ---");
-        for(Odontologo o : manager.listar()){
-            System.out.println("Odontologo "+o.getID()+" : "+o.getNombre());
+        System.out.println("--- LISTA DE ODONTÓLOGOS REGISTRADOS ---");
+
+        List<Odontologo> lista = manager.listar();
+        if (lista.isEmpty()) {
+            System.out.println("No hay odontólogos registrados.");
+        } else {
+            int i = 1;
+            for (Odontologo o : lista) {
+                String idCorto = o.getID() != null && o.getID().length() > 8 ? o.getID().substring(0, 8) : o.getID();
+                System.out.printf("%d) ID:%s | Nombre:%s | Tel:%s | Especialidad:%s%n",
+                    i++,
+                    idCorto,
+                    o.getNombre() != null ? o.getNombre() : "",
+                    o.getNumeroCelular() != null ? o.getNumeroCelular() : "",
+                    o.getEspecialidad() != null ? o.getEspecialidad() : ""
+                );
+            }
         }
-        System.out.println("Ingrese ENTER para continuar...");
+        System.out.println();
+        System.out.println("Presione ENTER para continuar...");
         sc.nextLine();
         limpiarConsola();
     }
     private static void actualizarOdontologo(Scanner sc, OdontologoManager manager){
         limpiarConsola();
-        System.out.println("Ingrese el ID del odontologo para actualizar");
-        String id = sc.nextLine();
-        Odontologo odontologo = manager.getById(id);
-        if(odontologo == null){
-            System.out.println("Odontologo no encontrado");
+        System.out.print("Ingrese el ID o el número mostrado en la lista del odontólogo para actualizar: ");
+        String entrada = sc.nextLine().trim();
+
+        if (entrada.isEmpty()) {
+            System.out.println("Entrada vacía. Cancelando.");
             System.out.println("Presione ENTER para continuar");
             sc.nextLine();
             limpiarConsola();
             return;
         }
+
+        String id = entrada;
+        try {
+            int idx = Integer.parseInt(entrada);
+            List<Odontologo> lista = manager.listar();
+            if (idx >= 1 && idx <= lista.size()) {
+                id = lista.get(idx - 1).getID();
+            } else {
+                System.out.println("Índice fuera de rango.");
+                System.out.println("Presione ENTER para continuar");
+                sc.nextLine();
+                limpiarConsola();
+                return;
+            }
+        } catch (NumberFormatException ex) {
+       
+        }
+
+        Odontologo odontologo = manager.getById(id);
+        if (odontologo == null) {
+            System.out.println("Odontólogo no encontrado");
+            System.out.println("Presione ENTER para continuar");
+            sc.nextLine();
+            limpiarConsola();
+            return;
+        }
+
         System.out.println("IMPORTANTE: Dejar vacío y presionar Enter para no modificar un campo.");
-        System.out.print("Actualizando nombre( "+odontologo.getNombre()+" ): ");
-        String nuevoNombre = sc.nextLine();
-        if(!nuevoNombre.isEmpty()) odontologo.setNombre(nuevoNombre);
-        
-        System.out.print("Actualizando especialidad ( "+odontologo.getEspecialidad()+" ): ");
-        String nuevaEspecialidad = sc.nextLine();
-        if(!nuevaEspecialidad.isEmpty()) odontologo.setEspecialidad(nuevaEspecialidad);
-        
-        System.out.print("Actualizando numero de contacto ("+odontologo.getNumero_de_celular()+" ): ");
-        String nuevoContacto = sc.nextLine();
-        if(!nuevoContacto.isEmpty()) odontologo.setNumero_de_celular(nuevoContacto);
-        
-        manager.actualizarPorId(id, odontologo);
+
+        System.out.print("Actualizando nombre (" + safe(odontologo.getNombre()) + "): ");
+        String nuevoNombre = sc.nextLine().trim();
+        if (!nuevoNombre.isEmpty()) odontologo.setNombre(nuevoNombre);
+
+        System.out.print("Actualizando especialidad (" + safe(odontologo.getEspecialidad()) + "): ");
+        String nuevaEspecialidad = sc.nextLine().trim();
+        if (!nuevaEspecialidad.isEmpty()) odontologo.setEspecialidad(nuevaEspecialidad);
+
+        System.out.print("Actualizando número de contacto (" + safe(odontologo.getNumeroCelular()) + "): ");
+        String nuevoContacto = sc.nextLine().trim();
+        if (!nuevoContacto.isEmpty()) odontologo.setNumeroCelular(nuevoContacto);
+
+        boolean ok = manager.actualizarPorId(id, odontologo);
+        if (ok) {
+            System.out.println("Odontólogo actualizado correctamente.");
+        } else {
+            System.out.println("No se pudo actualizar el odontólogo (ID no encontrado o error).");
+        }
+
         System.out.println("Presione ENTER para continuar...");
         sc.nextLine();
         limpiarConsola();
     }
     private static void eliminarOdontologo(Scanner sc, OdontologoManager manager){
         limpiarConsola();
-        System.out.println("Ingrese ID del odontologo a eliminar");
-        String id = sc.nextLine();
-        manager.eliminarPorId(id);
+        System.out.print("Ingrese ID o número del odontólogo a eliminar: ");
+        String entrada = sc.nextLine().trim();
+
+        if (entrada.isEmpty()) {
+            System.out.println("Entrada vacía. Cancelando.");
+            System.out.println("Presione ENTER para continuar...");
+            sc.nextLine();
+            limpiarConsola();
+            return;
+        }
+
+        String id = entrada;
+        try {
+            int idx = Integer.parseInt(entrada);
+            List<Odontologo> lista = manager.listar();
+            if (idx >= 1 && idx <= lista.size()) {
+                id = lista.get(idx - 1).getID();
+            } else {
+                System.out.println("Índice fuera de rango.");
+                System.out.println("Presione ENTER para continuar...");
+                sc.nextLine();
+                limpiarConsola();
+                return;
+            }
+        } catch (NumberFormatException ex) {
+        
+        }
+
+        Odontologo o = manager.getById(id);
+        if (o == null) {
+            System.out.println("No se encontró odontólogo con ese ID.");
+            System.out.println("Presione ENTER para continuar...");
+            sc.nextLine();
+            limpiarConsola();
+            return;
+        }
+
+        System.out.printf("Odontólogo: %s | Tel: %s | Especialidad: %s | ID: %s%n",
+                safe(o.getNombre()), safe(o.getNumeroCelular()), safe(o.getEspecialidad()), id);
+
+        System.out.print("¿Confirma eliminar este odontólogo? (S/N): ");
+        String confirm = sc.nextLine().trim().toUpperCase();
+        if (!confirm.equals("S")) {
+            System.out.println("Operación cancelada.");
+            System.out.println("Presione ENTER para continuar...");
+            sc.nextLine();
+            limpiarConsola();
+            return;
+        }
+
+        boolean ok = manager.eliminarPorId(id);
+        if (ok) {
+            System.out.println("Odontólogo eliminado correctamente.");
+        } else {
+            System.out.println("No se pudo eliminar el odontólogo (tal vez ya estaba eliminado o ocurrió un error).");
+        }
+
         System.out.println("Presione ENTER para continuar...");
         sc.nextLine();
         limpiarConsola();
-        }
+    }
     private static void menuPagos(Scanner sc, PagosManager pagosManager, PacienteManager pacienteManager, OdontologoManager odontologoManager){
     limpiarConsola();
     int opcion;
@@ -545,19 +787,38 @@ public class Main
             limpiarConsola();
             return;
         }
+
         System.out.println("---LISTA DE PAGOS---");
+        DateTimeFormatter formato = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
+
         for(Pagos p : pagos){
             Paciente pac = pacienteManager.getById(p.getPacienteID());
-            String nombrePaciente = (pac != null) ? pac.getNombres() + " " + pac.getApellidos(): "Paciente no encontrado";
-            DateTimeFormatter formato = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
+            String nombrePaciente = (pac != null) ? safe(pac.getNombres()) + " " + safe(pac.getApellidos())
+                                             : ("Paciente no encontrado (ID: " + safe(p.getPacienteID()) + ")");
+            String fechaStr;
+            if (p.getFecha() != null) {
+                try {
+                    fechaStr = p.getFecha().format(formato);
+                } catch (Exception ex) {
+                    fechaStr = p.getFecha().toString();
+                }
+            } else {
+                fechaStr = "no definida";
+            }
+
+            String montoStr = p.getMonto() != null ? p.getMonto().toPlainString() : "no definido";
+            String metodoStr = p.getMetodo() != null ? p.getMetodo().name() : "no definido";
+            String estadoStr = p.getEstado() != null ? p.getEstado().name() : "no definido";
+
             System.out.printf("ID Pago: %s | Paciente: %s | Fecha: %s | Monto: %s | Metodo: %s | Estado: %s%n",
-                    p.getID(),
+                    safe(p.getID()),
                     nombrePaciente,
-                    p.getFecha().format(formato),
-                    p.getMonto().toPlainString(),
-                    p.getMetodo(),
-                    p.getEstado());
+                    fechaStr,
+                    montoStr,
+                    metodoStr,
+                    estadoStr);
         }
+
         System.out.println("Presione ENTER para continuar...");
         sc.nextLine();
         limpiarConsola();
@@ -568,48 +829,55 @@ public class Main
         List<Pagos> lista = pagosManager.listar();
         if (lista.isEmpty()) {
             System.out.println("No hay pagos registrados.");
-            System.out.println("Presione ENTER para continuar....");
+            System.out.println("Presione ENTER para continuar...");
             sc.nextLine();
             limpiarConsola();
             return;
         }
+
         System.out.println("Pagos registrados:");
         for (int i = 0; i < lista.size(); i++) {
             Pagos p = lista.get(i);
             String pacienteNombre = "Paciente no encontrado";
-        if (pacienteManager != null) {
-            Paciente pac = pacienteManager.getById(p.getPacienteID());
-            if (pac != null) pacienteNombre = pac.getNombres() + " " + pac.getApellidos();
+            if (pacienteManager != null) {
+                Paciente pac = pacienteManager.getById(p.getPacienteID());
+                if (pac != null) pacienteNombre = safe(pac.getNombres()) + " " + safe(pac.getApellidos());
+            }
+            String id = safe(p.getID());
+            String idCorto = id.length() > 8 ? id.substring(0, 8) : id;
+            String montoStrList = p.getMonto() != null ? p.getMonto().toPlainString() : "no definido";
+            String metodoStrList = p.getMetodo() != null ? p.getMetodo().name() : "no definido";
+            String estadoStrList = p.getEstado() != null ? p.getEstado().name() : "no definido";
+
+            System.out.printf("%d: ID:%s | Paciente:%s | Monto:%s | Metodo:%s | Estado:%s%n",
+                i + 1,
+                idCorto,
+                pacienteNombre,
+                montoStrList,
+                metodoStrList,
+                estadoStrList);
         }
-        String idCorto = p.getID().length() > 8 ? p.getID().substring(0, 8) : p.getID();
-        System.out.printf("%d: ID:%s | Paciente:%s | Monto:%s | Metodo:%s | Estado:%s%n",
-            i + 1,
-            idCorto,
-            pacienteNombre,
-            p.getMonto().toPlainString(),
-            p.getMetodo(),
-            p.getEstado());
-        }
+
         System.out.print("Ingrese el número del pago o el ID completo del pago que desea actualizar: ");
         String entrada = sc.nextLine().trim();
         String pagoId = null;
 
         if (entrada.isEmpty()) {
             System.out.println("Entrada vacía. Cancelando actualización.");
-            System.out.println("Presione ENTER para continnuar...");
+            System.out.println("Presione ENTER para continuar...");
             sc.nextLine();
             limpiarConsola();
             return;
         }
 
-    // Si es numero entonces obtener por índice
+    // Si es número entonces obtener por índice
         try {
             int opc = Integer.parseInt(entrada);
             if (opc >= 1 && opc <= lista.size()) {
                 pagoId = lista.get(opc - 1).getID();
-            }else {
+            } else {
                 System.out.println("Número fuera de rango.");
-                System.out.println("Presione ENTER para continnuar...");
+                System.out.println("Presione ENTER para continuar...");
                 sc.nextLine();
                 limpiarConsola();
                 return;
@@ -621,15 +889,17 @@ public class Main
         Pagos pago = pagosManager.getById(pagoId);
         if (pago == null) {
             System.out.println("No se encontró un pago con ese ID.");
-            System.out.println("Presione ENTER para continnuar...");
+            System.out.println("Presione ENTER para continuar...");
             sc.nextLine();
             limpiarConsola();
             return;
         }
 
         System.out.println("IMPORTANTE: Dejar vacío y presionar Enter para no modificar un campo.");
+
+    // Monto
         BigDecimal nuevoMonto = null;
-        System.out.printf("Monto actual: %s. Nuevo monto: ", pago.getMonto().toPlainString());
+        System.out.printf("Monto actual: %s. Nuevo monto: ", pago.getMonto() != null ? pago.getMonto().toPlainString() : "no definido");
         String montoStr = sc.nextLine().trim();
         if (!montoStr.isEmpty()) {
             try {
@@ -637,82 +907,75 @@ public class Main
                 BigDecimal m = new BigDecimal(montoStr);
                 if (m.compareTo(BigDecimal.ZERO) <= 0) {
                     System.out.println("Monto inválido (debe ser > 0). Cancelando actualización.");
-                    System.out.println("Presione ENTER para continnuar...");
+                    System.out.println("Presione ENTER para continuar...");
                     sc.nextLine();
                     limpiarConsola();
                     return;
                 }
                 nuevoMonto = m;
-            }catch (Exception ex) {
+            } catch (Exception ex) {
                 System.out.println("Formato de monto inválido. Cancelando actualización.");
-                System.out.println("Presione ENTER para continnuar...");
+                System.out.println("Presione ENTER para continuar...");
                 sc.nextLine();
                 limpiarConsola();
                 return;
             }
         }
+
+    // Método
         Pagos.MetodoPago nuevoMetodo = null;
-        System.out.println("Método actual: " + pago.getMetodo());
+        System.out.println("Método actual: " + (pago.getMetodo() != null ? pago.getMetodo() : "no definido"));
         System.out.println("Opciones método: 1) EFECTIVO  2) TRANSFERENCIA ");
         System.out.print("Elija nuevo método (o Enter para mantener): ");
         String metodoStr = sc.nextLine().trim();
         if (!metodoStr.isEmpty()) {
             switch (metodoStr) {
-                case "1":{ nuevoMetodo = Pagos.MetodoPago.EFECTIVO;
-                break;
-                }
-                case "2":{ nuevoMetodo = Pagos.MetodoPago.TRANSFERENCIA;
-                break;
-                }
-                default :{
+                case "1": nuevoMetodo = Pagos.MetodoPago.EFECTIVO; break;
+                case "2": nuevoMetodo = Pagos.MetodoPago.TRANSFERENCIA; break;
+                default:
                     try {
                         nuevoMetodo = Pagos.MetodoPago.valueOf(metodoStr.toUpperCase());
                     } catch (Exception ex) {
                         System.out.println("Opción de método inválida. Cancelando actualización.");
-                        System.out.println("Presione ENTER para continnuar...");
+                        System.out.println("Presione ENTER para continuar...");
                         sc.nextLine();
                         limpiarConsola();
                         return;
                     }
-                }
             }
         }
+
+    // Estado
         Pagos.EstadoPago nuevoEstado = null;
-        System.out.println("Estado actual: " + pago.getEstado());
+        System.out.println("Estado actual: " + (pago.getEstado() != null ? pago.getEstado() : "no definido"));
         System.out.println("Opciones estado: 1) PENDIENTE  2) PAGADO  3) ANULADO");
         System.out.print("Elija nuevo estado (o Enter para mantener): ");
         String estadoStr = sc.nextLine().trim();
         if (!estadoStr.isEmpty()) {
             switch (estadoStr) {
-                case "1" :{ nuevoEstado = Pagos.EstadoPago.PENDIENTE;
-                break;
-                }
-                case "2" :{ nuevoEstado = Pagos.EstadoPago.PAGADO;
-                break;
-                }
-                case "3" :{ nuevoEstado = Pagos.EstadoPago.ANULADO;
-                break;
-                }
-                default : {
+                case "1": nuevoEstado = Pagos.EstadoPago.PENDIENTE; break;
+                case "2": nuevoEstado = Pagos.EstadoPago.PAGADO; break;
+                case "3": nuevoEstado = Pagos.EstadoPago.ANULADO; break;
+                default:
                     try {
                         nuevoEstado = Pagos.EstadoPago.valueOf(estadoStr.toUpperCase());
                     } catch (Exception ex) {
                         System.out.println("Opción de estado inválida. Cancelando actualización.");
-                        System.out.println("Presione ENTER para continnuar...");
+                        System.out.println("Presione ENTER para continuar...");
                         sc.nextLine();
                         limpiarConsola();
                         return;
                     }
-                }
             }
         }
 
         boolean ok = pagosManager.actualizarPorId(pagoId, nuevoMonto, nuevoMetodo, nuevoEstado);
         if (ok) {
-            System.out.println(" Pago actualizado correctamente.");
+            System.out.println("Pago actualizado correctamente.");
         } else {
-            System.out.println(" No se pudo actualizar el pago (ID no encontrado o error).");
+            System.out.println("No se pudo actualizar el pago (ID no encontrado o error).");
         }
+
         System.out.println("Presione ENTER para continuar...");
         sc.nextLine();
         limpiarConsola();
@@ -720,8 +983,16 @@ public class Main
     private static void anularPago(Scanner sc, PagosManager manager){
         limpiarConsola();
         System.out.println("--- ANULAR PAGO ---");
-        System.out.print("ingrese el ID del pago para anular: ");
-        String id = sc.nextLine();
+        System.out.print("Ingrese el ID del pago para anular: ");
+        String id = sc.nextLine().trim();
+        if (id.isEmpty()) {
+            System.out.println("Entrada vacía. Cancelando.");
+            System.out.println("Presione ENTER para continuar...");
+            sc.nextLine();
+            limpiarConsola();
+            return;
+        }
+
         Pagos pago = manager.getById(id);
         if(pago == null){
             System.out.println("No existe un pago con ese ID");
@@ -730,24 +1001,32 @@ public class Main
             limpiarConsola();
             return;
         }
-        System.out.println("Se encontro el siguiente pago: ");
-        System.out.println("ID: "+pago.getID() + 
-                           "| PacienteID: "+pago.getPacienteID()+
-                           "| Monto: "+
-                           "| Estado: "+ pago.getEstado());
-        System.out.println("¿Desea anular este pago? (S/N)");
-        String confirm = sc.nextLine().toUpperCase();
-        
+
+        System.out.println("Se encontró el siguiente pago:");
+        String montoStr = pago.getMonto() != null ? pago.getMonto().toPlainString() : "no definido";
+        String pacienteId = pago.getPacienteID() != null ? pago.getPacienteID() : "no definido";
+        String odontologoId = pago.getOdontologoID() != null ? pago.getOdontologoID() : "no definido";
+        System.out.println("ID: " + safe(pago.getID()) +
+                       " | PacienteID: " + safe(pacienteId) +
+                       " | OdontologoID: " + safe(odontologoId) +
+                       " | Monto: " + montoStr +
+                       " | Estado: " + safe(pago.getEstado()));
+
+        System.out.print("¿Desea anular este pago? (S/N): ");
+        String confirm = sc.nextLine().trim().toUpperCase();
+
         if(confirm.equals("S")){
-            boolean exito = manager.eliminadPorId(id);
+        
+            boolean exito = manager.eliminarPorId(id);
             if(exito){
                 System.out.println("El pago ha sido anulado correctamente.");
-            }else {
-                System.out.println(" El pago ya estaba anulado previamente.");
+            } else {
+                System.out.println("El pago ya estaba anulado previamente o ocurrió un error.");
             }
-        }else {
-            System.out.println("Operación cancelada por el ususario.");
+        } else {
+            System.out.println("Operación cancelada por el usuario.");
         }
+
         System.out.println("Presione ENTER para continuar...");
         sc.nextLine();
         limpiarConsola();
@@ -755,8 +1034,33 @@ public class Main
     private static void eliminarPago(Scanner sc, PagosManager manager){
         limpiarConsola();
         System.out.println("--- ELIMINAR PAGO ---");
-        System.out.println("ingrese el ID del pago a eliminar: ");
-        String id = sc.nextLine();
+        System.out.print("Ingrese el ID del pago o el número mostrado en la lista para eliminar: ");
+        String entrada = sc.nextLine().trim();
+
+        if (entrada.isEmpty()) {
+            System.out.println("Entrada vacía. Cancelando.");
+            System.out.println("Presione ENTER para continuar...");
+            sc.nextLine();
+            limpiarConsola();
+            return;
+        }
+
+        String id = entrada;
+        try {
+            int idx = Integer.parseInt(entrada);
+            List<Pagos> lista = manager.listar();
+            if (idx >= 1 && idx <= lista.size()) {
+                id = lista.get(idx - 1).getID();
+            } else {
+                System.out.println("Número fuera de rango.");
+                System.out.println("Presione ENTER para continuar...");
+                sc.nextLine();
+                limpiarConsola();
+                return;
+            }
+        } catch (NumberFormatException ex) {
+        }
+
         Pagos pago = manager.getById(id);
         if(pago == null){
             System.out.println("No existe un pago con ese ID");
@@ -765,24 +1069,31 @@ public class Main
             limpiarConsola();
             return;
         }
-        System.out.println("Se encontro el siguiente pago: ");
-        System.out.println("ID: "+pago.getID() + 
-                           "| PacienteID: "+pago.getPacienteID()+
-                           "| Monto: "+
-                           "| Estado: "+ pago.getEstado());
-        System.out.println("¿Desea eliminar este pago? (S/N)");
-        String confirm = sc.nextLine().toUpperCase();
-        
+
+        System.out.println("Se encontró el siguiente pago:");
+        String montoStr = pago.getMonto() != null ? pago.getMonto().toPlainString() : "no definido";
+        String pacienteId = pago.getPacienteID() != null ? pago.getPacienteID() : "no definido";
+        String odontologoId = pago.getOdontologoID() != null ? pago.getOdontologoID() : "no definido";
+        System.out.println("ID: " + safe(pago.getID()) +
+                       " | PacienteID: " + safe(pacienteId) +
+                       " | OdontologoID: " + safe(odontologoId) +
+                       " | Monto: " + montoStr +
+                       " | Estado: " + safe(pago.getEstado()));
+
+        System.out.print("¿Desea eliminar este pago? (S/N): ");
+        String confirm = sc.nextLine().trim().toUpperCase();
+
         if(confirm.equals("S")){
             boolean exito = manager.eliminarFisicoPorId(id);
             if(exito){
-                System.out.println(" El pago ha sido eliminado correctamente.");
-            }else {
-                System.out.println(" Ocurrio un problema al eliminar el pago.");
+                System.out.println("El pago ha sido eliminado correctamente.");
+            } else {
+                System.out.println("Ocurrió un problema al eliminar el pago.");
             }
-        }else {
-            System.out.println("Operación cancelada por el ususario.");
+        } else {
+            System.out.println("Operación cancelada por el usuario.");
         }
+
         System.out.println("Presione ENTER para continuar...");
         sc.nextLine();
         limpiarConsola();

@@ -19,7 +19,7 @@ public Odontologo(String nombre, String numero_de_celular,String especialidad, S
 public String getNombre(){
     return nombre;
 }
-public String getNumero_de_celular(){
+public String getNumeroCelular(){
     return numeroCelular;
 }
 public String getEspecialidad(){
@@ -32,7 +32,7 @@ public String getID(){
 public void setNombre(String nombre){
     this.nombre = nombre;
 }
-public void setNumero_de_celular(String numeroCelular){
+public void setNumeroCelular(String numeroCelular){
     this.numeroCelular = numeroCelular;
 }
 public void setEspecialidad(String especialidad){

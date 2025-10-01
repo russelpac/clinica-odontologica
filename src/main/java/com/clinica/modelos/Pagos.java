@@ -58,7 +58,7 @@ public class Pagos implements Serializable{
     public EstadoPago getEstado(){
         return estado;
     }
-    public String getOdontologID(){
+    public String getOdontologoID(){
         return odontologoID;
     }
 }

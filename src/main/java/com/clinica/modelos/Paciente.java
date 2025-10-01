@@ -18,7 +18,7 @@ public class Paciente implements Serializable  {
     private String direccion;
     private String antecMedicos;
     private Boolean activo = true;
-    private final LocalDateTime fechaConsulta;
+    private LocalDateTime fechaConsulta;
 
 public Paciente(String ID, String nombres, String CI, String apellidos, String numeroContacto,LocalDate fechaNacimiento, String alergias, String consultas,String sexo,
 String contactoEmergencias,String direccion, String antecMedicos,LocalDateTime fechaConsulta) {
@@ -117,5 +117,8 @@ public void setAntecMedicos(String antecMedicos){
 }
 public void setActivo(Boolean activo){
     this.activo=activo;
+}
+public void setFechaConsulta(LocalDateTime fechaConsulta){
+    this.fechaConsulta=fechaConsulta;
 }
 }
