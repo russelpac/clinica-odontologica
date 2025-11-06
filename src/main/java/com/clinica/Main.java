@@ -1,4 +1,5 @@
 package com.clinica;
+import com.clinica.reports.Reportes;
 import com.clinica.managers.PacienteManager;
 import com.clinica.modelos.Paciente;
 import com.clinica.managers.OdontologoManager;
@@ -17,13 +18,16 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
 
+
 public class Main 
 {
     public static void main( String[] args )
     {
+       
        Scanner sc = new Scanner(System.in);
        int opcion;
        limpiarConsola();
+       
        do { //ESTE SERA EL MENU PRINCIPAL
            System.out.println("================================");
            System.out.println("=========MENU PRINCIPAL=========");
@@ -33,7 +37,8 @@ public class Main
            System.out.println("1. Gestion de Pacientes->");
            System.out.println("2. Gestion de Odontologos->");
            System.out.println("3. Gestion de Pagos->");
-           System.out.println("4. Salir");
+           System.out.println("4. Generar informe de Pacientes por fecha->");
+           System.out.println("5. Salir");
            System.out.print("Seleccione una opcion valida: ");
            opcion = sc.nextInt();
            sc.nextLine();
@@ -71,16 +76,56 @@ public class Main
                    break;
                }
                case 4:{
-                    System.out.println("Saliendo del menú");
+                   try (Connection conn = DriverManager.getConnection("jdbc:sqlite:clinica.db")) {
+                   try (Statement s = conn.createStatement()) { s.execute("PRAGMA foreign_keys = ON"); }
+                        generarInforme(conn,sc);
+                   } catch (SQLException ex) {
+                   ex.printStackTrace();
+                   }
+                   
                     break;
+               }
+               case 5: {
+                   System.out.println("Saliendo del menu");
+                   break;
                }
                default: {
                    System.out.println("Opción no valida");
+                   System.out.println("Presione ENTER para continuar");
+                   sc.nextLine();
+                   limpiarConsola();
                    break;
                }
            }
-       }while (opcion != 4);
+       }while (opcion != 5);
        sc.close();
+    }
+    private static void generarInforme(Connection conn,Scanner sc){
+        limpiarConsola();
+        System.out.println("---GENERAR INFORME DE PAGOS POR PACIENTE---");
+        System.out.print("Ingrese fecha inicio (yyyy-MM-dd) o ENTER para todos: ");
+        String start = sc.nextLine().trim();
+        LocalDate starDate = null;
+        if(!start.isEmpty()){
+            starDate = LocalDate.parse(start);
+        }
+        System.out.print("Ingrese fecha fin (yyyy-MM-dd) o ENTER para todos:");
+        String end = sc.nextLine().trim();
+        LocalDate endDate = null;
+        if(!end.isEmpty()){
+            endDate = LocalDate.parse(end);
+        }
+        String rutaSalida = "reports/pagos_por_paciente.pdf";
+        try{
+            Reportes.generarInformePacientes(conn, rutaSalida);
+            System.out.println("Informe generado correctamente en: " + rutaSalida );
+        }catch(Exception e){
+            System.out.println("Error al generar informe: "+e.getMessage());
+            e.printStackTrace(); 
+        }
+        System.out.println("Presione ENTER para continuar...");
+        sc.nextLine();
+        limpiarConsola();
     }
     private static void menuPacientes(Scanner sc, PacienteManager pacienteManager){
     int opcion;
@@ -92,7 +137,7 @@ public class Main
         System.out.println("1. Registrar paciente");//Aprobado
         System.out.println("2. Listar pacientes");//Aprobado
         System.out.println("3. Actualizar paciente");//Aprobado
-        System.out.println("4. Eliminar paciente");//Aprobado
+        System.out.println("4. Anular paciente");//Aprobado
         System.out.println("5. <-Volver al menu principal");
         System.out.print("Seleccione una opcion valida: ");
         opcion = sc.nextInt();
@@ -114,6 +159,7 @@ public class Main
                 eliminarPaciente(sc,pacienteManager);
                 break;
             }
+         
             case 5:{
                 limpiarConsola();
                 break;
@@ -217,6 +263,7 @@ public class Main
     }
     private static void actualizarPaciente(Scanner sc, PacienteManager manager) {
         limpiarConsola();
+        listarPacientes(sc,manager);
         System.out.print("Ingrese el ID o el número mostrado en la lista del paciente para actualizar: ");
         String entrada = sc.nextLine().trim();
         if (entrada.isEmpty()) {
@@ -334,7 +381,8 @@ public class Main
     }
     private static void eliminarPaciente(Scanner sc, PacienteManager manager){
         limpiarConsola();
-        System.out.print("Ingrese ID o número del paciente a eliminar/anular: ");
+        listarPacientes(sc,manager);
+        System.out.print("Ingrese ID o número del paciente para anular: ");
         String entrada = sc.nextLine().trim();
         if (entrada.isEmpty()) {
             System.out.println("Entrada vacía. Cancelando.");
@@ -381,18 +429,6 @@ public class Main
         boolean ok = manager.eliminarPorId(id);
         if (ok) System.out.println("Paciente anulado correctamente.");
         else System.out.println("No se pudo anular el paciente (tal vez ya estaba inactivo o ocurrió un error).");
-        System.out.print("¿Desea eliminar este paciente? (S/N): ");
-        confirm = sc.nextLine().trim().toUpperCase();
-        if (!confirm.equals("S")) {
-            System.out.println("Operación cancelada.");
-            System.out.println("Presione ENTER para continuar...");
-            sc.nextLine();
-            limpiarConsola();
-            return;
-        }
-        ok = manager.eliminarFisicoPorId(id);
-        if (ok) System.out.println("Paciente eliminado correctamente.");
-        else System.out.println("Ocurrió un error al eliminar al paciente");
         System.out.println("Presione ENTER para continuar...");
         sc.nextLine();
         limpiarConsola();
@@ -493,6 +529,7 @@ public class Main
     }
     private static void actualizarOdontologo(Scanner sc, OdontologoManager manager){
         limpiarConsola();
+        listarOdontologos(sc,manager);
         System.out.print("Ingrese el ID o el número mostrado en la lista del odontólogo para actualizar: ");
         String entrada = sc.nextLine().trim();
 
@@ -557,7 +594,9 @@ public class Main
     }
     private static void eliminarOdontologo(Scanner sc, OdontologoManager manager){
         limpiarConsola();
-        System.out.print("Ingrese ID o número del odontólogo a eliminar: ");
+        listarOdontologos(sc,manager);
+        System.out.println("IMPORTANTE: Si el odontologo a eliminar esta relacionado con un pago se producira un ERROR ");
+        System.out.print("Ingrese ID o número del odontólogo : ");
         String entrada = sc.nextLine().trim();
 
         if (entrada.isEmpty()) {
@@ -611,7 +650,7 @@ public class Main
         if (ok) {
             System.out.println("Odontólogo eliminado correctamente.");
         } else {
-            System.out.println("No se pudo eliminar el odontólogo (tal vez ya estaba eliminado o ocurrió un error).");
+            System.out.println("ERROR:No se pudo eliminar el odontologo, pues esta relacionado con un pago, elimine primero el pago");
         }
 
         System.out.println("Presione ENTER para continuar...");
@@ -648,11 +687,11 @@ public class Main
                 break;
             }
             case 4:{
-                anularPago(sc, pagosManager);
+                anularPago(sc, pagosManager, pacienteManager);
                 break;
             }
             case 5:{
-                eliminarPago(sc, pagosManager);
+                eliminarPago(sc, pagosManager,pacienteManager);
                 break;
             }
             case 6:{
@@ -980,8 +1019,9 @@ public class Main
         sc.nextLine();
         limpiarConsola();
     }
-    private static void anularPago(Scanner sc, PagosManager manager){
+    private static void anularPago(Scanner sc, PagosManager manager, PacienteManager managerPaciente){
         limpiarConsola();
+        listarPagos(sc,manager,managerPaciente);
         System.out.println("--- ANULAR PAGO ---");
         System.out.print("Ingrese el ID del pago para anular: ");
         String id = sc.nextLine().trim();
@@ -1031,8 +1071,9 @@ public class Main
         sc.nextLine();
         limpiarConsola();
     }
-    private static void eliminarPago(Scanner sc, PagosManager manager){
+    private static void eliminarPago(Scanner sc, PagosManager manager, PacienteManager managerPaciente){
         limpiarConsola();
+        listarPagos(sc,manager,managerPaciente);
         System.out.println("--- ELIMINAR PAGO ---");
         System.out.print("Ingrese el ID del pago o el número mostrado en la lista para eliminar: ");
         String entrada = sc.nextLine().trim();

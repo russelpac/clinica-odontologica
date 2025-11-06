@@ -8,6 +8,7 @@ public class Odontologo implements Serializable{
     private String especialidad;
     private final String ID;
     
+    
 
 public Odontologo(String nombre, String numero_de_celular,String especialidad, String ID){
     this.nombre = nombre;
@@ -28,6 +29,7 @@ public String getEspecialidad(){
 public String getID(){
     return ID;
 }
+
 //SETERS
 public void setNombre(String nombre){
     this.nombre = nombre;
