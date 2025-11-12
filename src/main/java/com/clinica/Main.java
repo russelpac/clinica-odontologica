@@ -17,89 +17,104 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
-
+import com.clinica.tui.TuiMain;
 
 public class Main 
 {
-    public static void main( String[] args )
-    {
-       
-       Scanner sc = new Scanner(System.in);
-       int opcion;
-       limpiarConsola();
-       
-       do { //ESTE SERA EL MENU PRINCIPAL
-           System.out.println("================================");
-           System.out.println("=========MENU PRINCIPAL=========");
-           System.out.println("================================");
-           System.out.println("=======CLINICA ODONTOLOGIA======");
-           System.out.println("================================");
-           System.out.println("1. Gestion de Pacientes->");
-           System.out.println("2. Gestion de Odontologos->");
-           System.out.println("3. Gestion de Pagos->");
-           System.out.println("4. Generar informe de Pacientes por fecha->");
-           System.out.println("5. Salir");
-           System.out.print("Seleccione una opcion valida: ");
-           opcion = sc.nextInt();
-           sc.nextLine();
-           switch(opcion){
-               case 1: {
-                   try (Connection conn = DriverManager.getConnection("jdbc:sqlite:clinica.db")) {
-                   try (Statement s = conn.createStatement()) { s.execute("PRAGMA foreign_keys = ON"); }
-                        PacienteManager pacienteManager = new PacienteManager(conn);
-                        menuPacientes(sc, pacienteManager);
-                   } catch (SQLException ex) {
-                   ex.printStackTrace();
-                   }
-                   break;
-               }
-               case 2: {
-                   try (Connection conn = DriverManager.getConnection("jdbc:sqlite:clinica.db")) {
-                   try (Statement s = conn.createStatement()) { s.execute("PRAGMA foreign_keys = ON"); }
-                        OdontologoManager odontologoManager = new OdontologoManager(conn);
-                        menuOdontologos(sc, odontologoManager);
-                   } catch (SQLException ex) {
-                   ex.printStackTrace();
-                   }
-                   break;
-               }
-               case 3: {
-                   try (Connection conn = DriverManager.getConnection("jdbc:sqlite:clinica.db")) {
-                   try (Statement s = conn.createStatement()) { s.execute("PRAGMA foreign_keys = ON"); }
-                        PagosManager pagosManager = new PagosManager(conn);
-                        PacienteManager pacienteManager = new PacienteManager(conn);
-                        OdontologoManager odontologoManager = new OdontologoManager(conn);
-                        menuPagos(sc, pagosManager, pacienteManager, odontologoManager);
-                   } catch (SQLException ex) {
-                   ex.printStackTrace();
-                   }
-                   break;
-               }
-               case 4:{
-                   try (Connection conn = DriverManager.getConnection("jdbc:sqlite:clinica.db")) {
-                   try (Statement s = conn.createStatement()) { s.execute("PRAGMA foreign_keys = ON"); }
-                        generarInforme(conn,sc);
-                   } catch (SQLException ex) {
-                   ex.printStackTrace();
-                   }
-                   
-                    break;
-               }
-               case 5: {
-                   System.out.println("Saliendo del menu");
-                   break;
-               }
-               default: {
-                   System.out.println("Opción no valida");
-                   System.out.println("Presione ENTER para continuar");
-                   sc.nextLine();
-                   limpiarConsola();
-                   break;
-               }
-           }
-       }while (opcion != 5);
-       sc.close();
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+        String modo = null;
+        while (true) {
+            System.out.println("Seleccione el modo de ejecución:");
+            System.out.println("  1) TUI (interfaz en terminal)");
+            System.out.println("  2) Consola (modo texto clásico)");
+            System.out.print("Opción (1/2): ");
+            String entrada = sc.nextLine().trim();
+            if ("1".equals(entrada) || "tui".equalsIgnoreCase(entrada)) { modo = "tui"; break; }
+            if ("2".equals(entrada) || "console".equalsIgnoreCase(entrada) || "c".equalsIgnoreCase(entrada)) { modo = "console"; break; }
+            System.out.println("Opción no válida. Intente de nuevo.");
+        }
+
+        String url = "jdbc:sqlite:clinica.db";
+
+    // --- Abrir conexión una sola vez y crear managers ---
+        try (Connection conn = DriverManager.getConnection(url)) {
+        // activar foreign keys
+            try (Statement s = conn.createStatement()) {
+            s.execute("PRAGMA foreign_keys = ON");
+            }
+
+        // Crear managers compartidos
+            PacienteManager pacienteManager = new PacienteManager(conn);
+            OdontologoManager odontologoManager = new OdontologoManager(conn);
+            PagosManager pagosManager = new PagosManager(conn);
+
+            if ("tui".equals(modo)) {
+                System.out.println("Iniciando TUI...");
+            // Inicia la interfaz TUI (lanterna). Esto bloqueará hasta que la TUI se cierre.
+                TuiMain tui = new TuiMain(pacienteManager, odontologoManager, pagosManager);
+                tui.start();
+                System.out.println("TUI cerrada. Saliendo de la aplicación.");
+            } else {
+            // --- Menú consola (usa los mismos managers) ---
+                int opcion;
+                do { // ESTE SERA EL MENU PRINCIPAL
+                    limpiarConsola();
+                    System.out.println("================================");
+                    System.out.println("=========MENU PRINCIPAL=========");
+                    System.out.println("================================");
+                    System.out.println("=======CLINICA ODONTOLOGIA======");
+                    System.out.println("================================");
+                    System.out.println("1. Gestion de Pacientes->");
+                    System.out.println("2. Gestion de Odontologos->");
+                    System.out.println("3. Gestion de Pagos->");
+                    System.out.println("4. Generar informe de Pacientes por fecha->");
+                    System.out.println("5. Salir");
+                    System.out.print("Seleccione una opcion valida: ");
+                    opcion = sc.nextInt();
+                    sc.nextLine();
+                    switch (opcion) {
+                        case 1: {
+                        // ya tenemos pacienteManager
+                            menuPacientes(sc, pacienteManager);
+                            break;
+                        }
+                        case 2: {
+                            menuOdontologos(sc, odontologoManager);
+                            break;
+                        }
+                        case 3: {
+                        // pagosManager, pacienteManager, odontologoManager existen
+                            menuPagos(sc, pagosManager, pacienteManager, odontologoManager);
+                            break;
+                        }
+                        case 4: {
+                            generarInforme(conn, sc);
+                            break;
+                        }
+                        case 5: {
+                            System.out.println("Saliendo del menu");
+                            break;
+                        }
+                        default: {
+                            System.out.println("Opción no valida");
+                            System.out.println("Presione ENTER para continuar");
+                            sc.nextLine();
+                            limpiarConsola();
+                            break;
+                        }
+                    }
+                } while (opcion != 5);
+            }
+
+        } catch (Exception e) {
+            System.err.println("Error en la aplicación: " + e.getMessage());
+            e.printStackTrace();
+        } finally {
+            sc.close();
+        }
     }
+
     private static void generarInforme(Connection conn,Scanner sc){
         limpiarConsola();
         System.out.println("---GENERAR INFORME DE PAGOS POR PACIENTE---");
@@ -1075,7 +1090,7 @@ public class Main
         limpiarConsola();
         listarPagos(sc,manager,managerPaciente);
         System.out.println("--- ELIMINAR PAGO ---");
-        System.out.print("Ingrese el ID del pago o el número mostrado en la lista para eliminar: ");
+        System.out.print("Ingrese el ID del pago: ");
         String entrada = sc.nextLine().trim();
 
         if (entrada.isEmpty()) {
