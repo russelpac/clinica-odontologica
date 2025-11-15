@@ -124,13 +124,8 @@ private void showGenerarInforme(WindowBasedTextGUI textGUI) {
     TextBox txtPath = new TextBox(new TerminalSize(50, 1), "reports/pacientes.pdf");
     form.addComponent(txtPath);
 
-    /* (Opcional: si quieres pedir fecha inicio/fin en TUI, agrega campos aquí)
-    form.addComponent(new Label("Fecha inicio (yyyy-MM-dd) o vacío:"));
-    TextBox txtStart = new TextBox(new TerminalSize(20,1));
-    form.addComponent(txtStart);
-    form.addComponent(new Label("Fecha fin (yyyy-MM-dd) o vacío:"));
-    TextBox txtEnd = new TextBox(new TerminalSize(20,1));
-    form.addComponent(txtEnd);*/
+    
+    
 
     Panel actions = new Panel(new GridLayout(3));
     Button btnGenerar = new Button("Generar", () -> {
