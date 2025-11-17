@@ -12,13 +12,12 @@ import com.clinica.modelos.Odontologo;
 
 import java.math.BigDecimal;
 import java.time.format.DateTimeFormatter;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
+import java.util.Arrays;
 
-/**
- * Pantalla para listar / ver / editar / anular / eliminar pagos usando Lanterna.
- */
+
 public class PagosScreen {
 
     private final PagosManager pagosManager;
@@ -26,7 +25,8 @@ public class PagosScreen {
     private final OdontologoManager odontologoManager;
 
     private Table<String> table;
-    private List<String> currentIds;
+    private final List<String> currentIds = new ArrayList<>();
+    private final DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
 
     public PagosScreen(PagosManager pagosManager,
                        PacienteManager pacienteManager,
@@ -34,78 +34,72 @@ public class PagosScreen {
         this.pagosManager = pagosManager;
         this.pacienteManager = pacienteManager;
         this.odontologoManager = odontologoManager;
-        this.currentIds = new ArrayList<>();
     }
 
-    /** Compatibilidad: muestra lista sin selección */
-    public void show(WindowBasedTextGUI textGUI) {
-        show(textGUI, null);
-    }
+    
+    public void show(WindowBasedTextGUI textGUI, String providedSelectedId) {
+        final Window w = new BasicWindow("Pagos - Lista");
+        Panel root = new Panel(new GridLayout(1));
 
-    /**
-     * Muestra lista de pagos; si selectId != null intenta seleccionar ese pago.
-     */
-    public void show(WindowBasedTextGUI textGUI, String selectId) {
-        final Window window = new BasicWindow("Pagos - Lista");
-        Panel panel = new Panel(new GridLayout(1));
+        
+        root.addComponent(new Label("Pagos registrados (use flechas para seleccionar). TAB para botones."));
 
-        Label instrucciones = new Label("Use ↑/↓ para seleccionar, TAB para ir a botones y Enter para ejecutar.");
-        panel.addComponent(instrucciones);
-
+        
         table = new Table<>("#", "ID", "Paciente", "Fecha", "Monto", "Método", "Estado", "Odontólogo");
-        table.setPreferredSize(new TerminalSize(110, 20));
+        table.setPreferredSize(new TerminalSize(150, 20));
         reloadTable();
 
-        if (selectId != null) {
-            int idx = -1;
+        
+        if (providedSelectedId != null) {
             for (int i = 0; i < currentIds.size(); i++) {
-                if (selectId.equals(currentIds.get(i))) { idx = i; break; }
-            }
-            if (idx >= 0) {
-                try { table.setSelectedRow(idx); table.takeFocus(); } catch (Exception ignored) {}
-            }
-        } else {
-            try {
-                if (table.getTableModel().getRowCount() > 0) {
-                    table.setSelectedRow(0);
+                if (providedSelectedId.equals(currentIds.get(i))) {
+                    try { table.setSelectedRow(i); } catch (Exception ignored) {}
+                    break;
                 }
-                table.takeFocus();
-            } catch (Exception ignored) {}
+            }
         }
 
-        panel.addComponent(table.withBorder(Borders.singleLine("Pagos")));
+        root.addComponent(table.withBorder(Borders.singleLine("Pagos")));
 
-        Panel buttons = new Panel(new GridLayout(2));
-        Button btnAcciones = new Button("Acciones", () -> showActionsForSelectedRow(textGUI));
-        Button btnCerrar = new Button("Cerrar", window::close);
-        buttons.addComponent(btnAcciones);
-        buttons.addComponent(btnCerrar);
+       
+        Panel botones = new Panel(new GridLayout(4));
+        botones.addComponent(new Button("Ver", () -> onVer(textGUI)));
+        botones.addComponent(new Button("Editar", () -> onEditar(textGUI)));
+        botones.addComponent(new Button("Anular", () -> onAnular(textGUI)));
+        botones.addComponent(new Button("Eliminar (físico)", () -> onEliminarFisico(textGUI)));
+        botones.addComponent(new Button("Cerrar", w::close));
+        root.addComponent(botones);
 
-        panel.addComponent(buttons);
-        window.setComponent(panel);
-        textGUI.addWindowAndWait(window);
+        w.setComponent(root);
+        w.setHints(Arrays.asList(Window.Hint.CENTERED));
+        textGUI.addWindowAndWait(w);
     }
 
+    
     private void reloadTable() {
         table.getTableModel().clear();
         currentIds.clear();
         List<Pagos> lista = pagosManager.listar();
-        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
         int idx = 1;
         for (Pagos p : lista) {
             currentIds.add(p.getID());
+
+            
             String pacienteNombre = "";
             try {
                 Paciente pac = pacienteManager.getById(p.getPacienteID());
-                pacienteNombre = pac != null ? (pac.getNombres() + " " + pac.getApellidos()) : "";
+                if (pac != null) pacienteNombre = safe(pac.getNombres()) + " " + safe(pac.getApellidos());
             } catch (Exception ignored) {}
+
+           
             String odontNombre = "";
             try {
                 if (p.getOdontologoID() != null) {
                     Odontologo od = odontologoManager.getById(p.getOdontologoID());
-                    odontNombre = od != null ? od.getNombre() : "";
+                    if (od != null) odontNombre = od.getNombre();
                 }
             } catch (Exception ignored) {}
+
             String fecha = p.getFecha() != null ? p.getFecha().format(fmt) : "";
             String monto = p.getMonto() != null ? p.getMonto().toPlainString() : "";
             String metodo = p.getMetodo() != null ? p.getMetodo().toString() : "";
@@ -114,256 +108,236 @@ public class PagosScreen {
             table.getTableModel().addRow(
                     String.valueOf(idx),
                     shortId(p.getID()),
-                    safe(pacienteNombre),
+                    pacienteNombre,
                     fecha,
                     monto,
-                    safe(metodo),
-                    safe(estado),
-                    safe(odontNombre)
+                    metodo,
+                    estado,
+                    odontNombre
             );
             idx++;
         }
+
         try { table.setSelectedRow(-1); } catch (Exception ignored) {}
     }
 
-    private Optional<String> selectedIdFromTable() {
-        int selectedRow = table.getSelectedRow();
-        if (selectedRow < 0) return Optional.empty();
-        if (currentIds == null) return Optional.empty();
-        if (selectedRow >= currentIds.size()) return Optional.empty();
-        return Optional.ofNullable(currentIds.get(selectedRow));
-    }
+    // ---------- ACCIONES ----------
 
-    private void showActionsForSelectedRow(WindowBasedTextGUI textGUI) {
-        Optional<String> maybeId = selectedIdFromTable();
-        if (maybeId.isEmpty()) {
-            showMsg(textGUI, "Seleccione un pago primero.");
-            return;
-        }
-        String id = maybeId.get();
-
-        final Window w = new BasicWindow("Acciones - Pago");
-        Panel p = new Panel(new GridLayout(1));
-        p.addComponent(new Label("ID: " + shortId(id)));
-        p.addComponent(new Label("Seleccione la acción:"));
-
-        p.addComponent(new Button("Ver detalle", () -> {
-            w.close();
-            showDetailById(id, textGUI);
-        }));
-
-        p.addComponent(new Button("Editar / Actualizar", () -> {
-            w.close();
-            editById(id, textGUI);
-            reloadTable();
-        }));
-
-        p.addComponent(new Button("Anular (marcar como anulado)", () -> {
-            w.close();
-            // intentar setear estado ANULADO (probar varios nombres comunes)
-            Pagos pago = pagosManager.getById(id);
-            if (pago == null) { showMsg(textGUI, "Pago no encontrado."); return; }
-            Pagos.EstadoPago nuevoEstado = tryParseEstado("ANULADO");
-            if (nuevoEstado == null) nuevoEstado = tryParseEstado("CANCELADO");
-            if (nuevoEstado == null) nuevoEstado = tryParseEstado("ANULADA");
-            if (nuevoEstado == null) {
-                showMsg(textGUI, "No se pudo anular: no existe un valor enum ANULADO/CANCELADO en EstadoPago.");
-                return;
-            }
-            boolean ok = pagosManager.actualizarPorId(id, null, null, nuevoEstado);
-            if (ok) showMsg(textGUI, "Pago anulado.");
-            else showMsg(textGUI, "No se pudo anular el pago.");
-            reloadTable();
-        }));
-
-p.addComponent(new Button("Eliminar permanentemente", () -> {
-    w.close();
-    final Window confirm = new BasicWindow("Confirmar eliminación");
-    Panel cp = new Panel(new GridLayout(1));
-    cp.addComponent(new Label("Eliminar pago permanentemente (irreversible)."));
-    cp.addComponent(new Label("¿Desea continuar?"));
-    cp.addComponent(new Button("Sí", () -> {
-        // --- Diagnóstico / debug antes de borrar ---
-        System.out.println("DEBUG PagosScreen: solicitar eliminación");
-        Optional<String> maybeIdDbg = selectedIdFromTable();
-        if (maybeIdDbg.isEmpty()) {
-            showMsg(textGUI, "No se detectó ID seleccionado (debug).");
-            confirm.close();
-            return;
-        }
-        String idDbg = maybeIdDbg.get();
-        System.out.println("DEBUG PagosScreen: id seleccionado = " + idDbg);
-
-        Pagos before = pagosManager.getById(idDbg);
-        System.out.println("DEBUG PagosScreen: pago en manager antes = " + (before == null ? "NULL" : "ENCONTRADO"));
-
-        boolean ok = false;
-        try {
-            ok = pagosManager.eliminarFisicoPorId(idDbg); // usa el método de eliminación física
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            ok = false;
-        }
-
-        // --- Diagnóstico / debug después de borrar ---
-        System.out.println("DEBUG PagosScreen: eliminarFisicoPorId returned = " + ok);
-        Pagos after = pagosManager.getById(idDbg);
-        System.out.println("DEBUG PagosScreen: pago en manager después = " + (after == null ? "NULL" : "ENCONTRADO"));
-
-        if (ok) showMsg(textGUI, "Pago eliminado permanentemente.");
-        else showMsg(textGUI, "No se pudo eliminar. Revise la consola para más detalles.");
-
-        confirm.close();
-        reloadTable();
-    }));
-    cp.addComponent(new Button("No", confirm::close));
-    confirm.setComponent(cp);
-    textGUI.addWindowAndWait(confirm);
-}));
-
-
-        p.addComponent(new Button("Volver", w::close));
-        w.setComponent(p);
-        textGUI.addWindowAndWait(w);
-    }
-
-    private void showDetailById(String id, WindowBasedTextGUI textGUI) {
+    private void onVer(WindowBasedTextGUI textGUI) {
+        int sel = table.getSelectedRow();
+        if (sel < 0) { showMsg(textGUI, "Seleccione un pago primero."); return; }
+        if (sel >= currentIds.size()) { showMsg(textGUI, "Fila inválida."); return; }
+        String id = currentIds.get(sel);
         Pagos p = pagosManager.getById(id);
         if (p == null) { showMsg(textGUI, "Pago no encontrado."); return; }
 
-        final Window w = new BasicWindow("Detalle Pago");
-        Panel pnl = new Panel(new GridLayout(2));
-        pnl.addComponent(new Label("ID:"));
-        pnl.addComponent(new Label(safe(p.getID())));
-        pnl.addComponent(new Label("Paciente ID:"));
-        pnl.addComponent(new Label(safe(p.getPacienteID())));
+        
         String pacienteNombre = "";
-        try {
-            Paciente pac = pacienteManager.getById(p.getPacienteID());
-            pacienteNombre = pac != null ? (pac.getNombres() + " " + pac.getApellidos()) : "";
-        } catch (Exception ignored) {}
-        pnl.addComponent(new Label("Paciente:"));
-        pnl.addComponent(new Label(safe(pacienteNombre)));
-        pnl.addComponent(new Label("Fecha:"));
-        pnl.addComponent(new Label(p.getFecha() != null ? p.getFecha().toString() : ""));
-        pnl.addComponent(new Label("Monto:"));
-        pnl.addComponent(new Label(p.getMonto() != null ? p.getMonto().toPlainString() : ""));
-        pnl.addComponent(new Label("Método:"));
-        pnl.addComponent(new Label(p.getMetodo() != null ? p.getMetodo().toString() : ""));
-        pnl.addComponent(new Label("Estado:"));
-        pnl.addComponent(new Label(p.getEstado() != null ? p.getEstado().toString() : ""));
-        pnl.addComponent(new Label("Odontólogo ID:"));
-        pnl.addComponent(new Label(safe(p.getOdontologoID())));
+        Paciente pac = pacienteManager.getById(p.getPacienteID());
+        if (pac != null) pacienteNombre = safe(pac.getNombres()) + " " + safe(pac.getApellidos());
         String odontNombre = "";
-        try {
+        if (p.getOdontologoID() != null) {
             Odontologo od = odontologoManager.getById(p.getOdontologoID());
-            odontNombre = od != null ? od.getNombre() : "";
-        } catch (Exception ignored) {}
-        pnl.addComponent(new Label("Odontólogo:"));
-        pnl.addComponent(new Label(safe(odontNombre)));
-        pnl.addComponent(new Button("Cerrar", w::close));
-        w.setComponent(pnl);
-        textGUI.addWindowAndWait(w);
+            if (od != null) odontNombre = od.getNombre();
+        }
+
+        final Window vw = new BasicWindow("Detalle Pago");
+        Panel pn = new Panel(new GridLayout(2));
+        pn.addComponent(new Label("ID:")); pn.addComponent(new Label(p.getID()));
+        pn.addComponent(new Label("Paciente:")); pn.addComponent(new Label(pacienteNombre));
+        pn.addComponent(new Label("Odontólogo:")); pn.addComponent(new Label(odontNombre));
+        pn.addComponent(new Label("Fecha:")); pn.addComponent(new Label(p.getFecha() != null ? p.getFecha().format(fmt) : ""));
+        pn.addComponent(new Label("Monto:")); pn.addComponent(new Label(p.getMonto() != null ? p.getMonto().toPlainString() : ""));
+        pn.addComponent(new Label("Método:")); pn.addComponent(new Label(p.getMetodo() != null ? p.getMetodo().toString() : ""));
+        pn.addComponent(new Label("Estado:")); pn.addComponent(new Label(p.getEstado() != null ? p.getEstado().toString() : ""));
+        pn.addComponent(new Button("Cerrar", vw::close));
+        vw.setComponent(pn);
+        textGUI.addWindowAndWait(vw);
     }
 
-    private void editById(String id, WindowBasedTextGUI textGUI) {
+    private void onEditar(WindowBasedTextGUI textGUI) {
+        int sel = table.getSelectedRow();
+        if (sel < 0) { showMsg(textGUI, "Seleccione un pago primero."); return; }
+        if (sel >= currentIds.size()) { showMsg(textGUI, "Fila inválida."); return; }
+        String id = currentIds.get(sel);
         Pagos p = pagosManager.getById(id);
         if (p == null) { showMsg(textGUI, "Pago no encontrado."); return; }
 
         final Window w = new BasicWindow("Editar Pago");
-        Panel form = new Panel();
-        form.setLayoutManager(new GridLayout(2));
+        Panel form = new Panel(new GridLayout(2));
 
+        
+        
+
+        
         form.addComponent(new Label("Monto:"));
-        TextBox txtMonto = new TextBox(new TerminalSize(20, 1), p.getMonto() != null ? p.getMonto().toPlainString() : "");
+        TextBox txtMonto = new TextBox(new TerminalSize(20,1), p.getMonto() != null ? p.getMonto().toPlainString() : "");
         form.addComponent(txtMonto);
 
-        form.addComponent(new Label("Método (EFECTIVO ,TRANSFERENCIA):"));
-        TextBox txtMetodo = new TextBox(new TerminalSize(20, 1), p.getMetodo() != null ? p.getMetodo().toString() : "");
-        form.addComponent(txtMetodo);
+        // Metodo
+        form.addComponent(new Label("Método:"));
+        ComboBox<String> cmbMetodo = new ComboBox<>();
+        cmbMetodo.addItem("EFECTIVO");
+        cmbMetodo.addItem("TRANSFERENCIA");
+        cmbMetodo.setSelectedItem(p.getMetodo() != null ? p.getMetodo().toString() : "EFECTIVO");
+        form.addComponent(cmbMetodo);
 
-        form.addComponent(new Label("Estado (PENDIENTE, PAGADO, ANULADO):"));
-        TextBox txtEstado = new TextBox(new TerminalSize(20, 1), p.getEstado() != null ? p.getEstado().toString() : "");
-        form.addComponent(txtEstado);
+        
+        form.addComponent(new Label("Estado:"));
+        ComboBox<String> cmbEstado = new ComboBox<>();
+        for (Pagos.EstadoPago e : Pagos.EstadoPago.values()) cmbEstado.addItem(e.toString());
+        cmbEstado.setSelectedItem(p.getEstado() != null ? p.getEstado().toString() : Pagos.EstadoPago.PENDIENTE.toString());
+        form.addComponent(cmbEstado);
 
-        form.addComponent(new Label("Odontólogo ID (opcional):"));
-        TextBox txtOdontId = new TextBox(new TerminalSize(20, 1), p.getOdontologoID() != null ? p.getOdontologoID() : "");
-        form.addComponent(txtOdontId);
+        
+        form.addComponent(new Label("Odontólogo:"));
+        String nombreOdActual = "";
+        if (p.getOdontologoID() != null) {
+            Odontologo odact = odontologoManager.getById(p.getOdontologoID());
+            if (odact != null) nombreOdActual = odact.getNombre();
+        }
+        TextBox txtOd = new TextBox(new TerminalSize(30,1), nombreOdActual);
+        txtOd.setReadOnly(true);
 
-        Panel actions = new Panel(new GridLayout(3));
+        final String[] seleccionadoOdId = new String[1];
+        seleccionadoOdId[0] = p.getOdontologoID();
+
+        Button btnCambiarOd = new Button("Cambiar odontólogo", () -> {
+            Odontologo elegido = seleccionarOdontologo(textGUI);
+            if (elegido != null) {
+                seleccionadoOdId[0] = elegido.getID();
+                txtOd.setText(elegido.getNombre());
+            }
+        });
+
+        Panel odontPanel = new Panel(new GridLayout(2));
+        odontPanel.addComponent(txtOd);
+        odontPanel.addComponent(btnCambiarOd);
+        form.addComponent(odontPanel);
+
+        
+        Panel acc = new Panel(new GridLayout(2));
         Button btnGuardar = new Button("Guardar", () -> {
-            String v;
-            BigDecimal nuevoMonto = null;
-            v = txtMonto.getText().trim();
-            if (!v.isEmpty()) {
-                try {
-                    nuevoMonto = new BigDecimal(v);
-                } catch (Exception ex) {
-                    showMsg(textGUI, "Monto inválido.");
-                    return;
-                }
+            
+            BigDecimal monto;
+            try {
+                String mtext = txtMonto.getText().trim().replace(",", ".");
+                monto = new BigDecimal(mtext);
+                if (monto.compareTo(BigDecimal.ZERO) <= 0) { showMsg(textGUI, "El monto debe ser mayor a 0."); return; }
+            } catch (Exception ex) {
+                showMsg(textGUI, "Monto inválido."); return;
             }
 
-            Pagos.MetodoPago nuevoMetodo = null;
-            v = txtMetodo.getText().trim();
-            if (!v.isEmpty()) {
-                nuevoMetodo = tryParseMetodo(v);
-                if (nuevoMetodo == null) {
-                    // no pudo parsear -> informar pero permitir continuar (se puede guardar null para no cambiar)
-                    showMsg(textGUI, "Método no reconocido; el campo no será cambiado si deja vacío.");
-                }
+            Pagos.MetodoPago metodo = cmbMetodo.getSelectedItem().equals("EFECTIVO")
+                    ? Pagos.MetodoPago.EFECTIVO : Pagos.MetodoPago.TRANSFERENCIA;
+            Pagos.EstadoPago estado = Pagos.EstadoPago.valueOf(cmbEstado.getSelectedItem());
+
+            
+            boolean ok1 = pagosManager.actualizarPorId(p.getID(), monto, metodo, estado);
+
+            
+            boolean ok2 = true;
+            if (seleccionadoOdId[0] != null && !seleccionadoOdId[0].equals(p.getOdontologoID())) {
+                ok2 = pagosManager.actualizarOdontologoPorId(p.getID(), seleccionadoOdId[0]);
             }
 
-            Pagos.EstadoPago nuevoEstado = null;
-            v = txtEstado.getText().trim();
-            if (!v.isEmpty()) {
-                nuevoEstado = tryParseEstado(v);
-                if (nuevoEstado == null) {
-                    showMsg(textGUI, "Estado no reconocido; el campo no será cambiado si deja vacío.");
-                }
+            if (ok1 && ok2) {
+                showMsg(textGUI, "Pago actualizado correctamente.");
+                reloadTable();
+                w.close();
+            } else {
+                showMsg(textGUI, "Ocurrió un error al actualizar el pago.");
             }
-
-            String nuevoOdontId = txtOdontId.getText().trim();
-            // Llamar al manager (su implementación actual sólo actualiza los campos no nulos)
-            boolean ok = pagosManager.actualizarPorId(id, nuevoMonto, nuevoMetodo, nuevoEstado);
-            // Si además hay odontologoID que quieras persistir, necesitarías un método adicional en manager
-            if (ok) showMsg(textGUI, "Pago actualizado.");
-            else showMsg(textGUI, "No se pudo actualizar el pago.");
-            w.close();
         });
 
         Button btnCancelar = new Button("Cancelar", w::close);
-        actions.addComponent(btnGuardar);
-        actions.addComponent(btnCancelar);
+        acc.addComponent(btnGuardar);
+        acc.addComponent(btnCancelar);
 
-        form.addComponent(actions, GridLayout.createHorizontallyFilledLayoutData(2));
+        form.addComponent(new EmptySpace(TerminalSize.ONE), GridLayout.createHorizontallyFilledLayoutData(2));
+        form.addComponent(acc, GridLayout.createHorizontallyFilledLayoutData(2));
+
         w.setComponent(form);
+        w.setHints(Arrays.asList(Window.Hint.CENTERED));
         textGUI.addWindowAndWait(w);
     }
 
-    // --- helpers para parsear enums (intenta valueOf ignorando case) ---
-    private Pagos.MetodoPago tryParseMetodo(String s) {
-        if (s == null || s.isEmpty()) return null;
-        try {
-            return Pagos.MetodoPago.valueOf(s.toUpperCase());
-        } catch (Exception ex) {
-            return null;
-        }
+    private void onAnular(WindowBasedTextGUI textGUI) {
+        int sel = table.getSelectedRow();
+        if (sel < 0) { showMsg(textGUI, "Seleccione un pago primero."); return; }
+        if (sel >= currentIds.size()) { showMsg(textGUI, "Fila inválida."); return; }
+        String id = currentIds.get(sel);
+        Pagos p = pagosManager.getById(id);
+        if (p == null) { showMsg(textGUI, "Pago no encontrado."); return; }
+
+        final Window conf = new BasicWindow("Confirmar anulación");
+        Panel pn = new Panel(new GridLayout(1));
+        pn.addComponent(new Label("¿Marcar pago como ANULADO? ID: " + p.getID()));
+        pn.addComponent(new Button("Sí", () -> {
+            boolean ok = pagosManager.eliminarPorId(p.getID()); 
+            if (ok) showMsg(textGUI, "Pago anulado.");
+            else showMsg(textGUI, "No se pudo anular.");
+            conf.close();
+            reloadTable();
+        }));
+        pn.addComponent(new Button("No", conf::close));
+        conf.setComponent(pn);
+        textGUI.addWindowAndWait(conf);
     }
 
-    private Pagos.EstadoPago tryParseEstado(String s) {
-        if (s == null || s.isEmpty()) return null;
-        try {
-            return Pagos.EstadoPago.valueOf(s.toUpperCase());
-        } catch (Exception ex) {
-            // probar algunos sinónimos comunes
-            String u = s.toUpperCase();
-            try {
-                if (u.contains("ANUL")) return Pagos.EstadoPago.valueOf("ANULADO");
-                if (u.contains("CANCEL")) return Pagos.EstadoPago.valueOf("CANCELADO");
-            } catch (Exception ignored) {}
-            return null;
+    private void onEliminarFisico(WindowBasedTextGUI textGUI) {
+        int sel = table.getSelectedRow();
+        if (sel < 0) { showMsg(textGUI, "Seleccione un pago primero."); return; }
+        if (sel >= currentIds.size()) { showMsg(textGUI, "Fila inválida."); return; }
+        String id = currentIds.get(sel);
+        Pagos p = pagosManager.getById(id);
+        if (p == null) { showMsg(textGUI, "Pago no encontrado."); return; }
+
+        final Window conf = new BasicWindow("Confirmar eliminación física");
+        Panel pn = new Panel(new GridLayout(1));
+        pn.addComponent(new Label("¿Eliminar pago PERMANENTEMENTE? ID: " + p.getID()));
+        pn.addComponent(new Button("Sí", () -> {
+            boolean ok = pagosManager.eliminarFisicoPorId(p.getID());
+            if (ok) showMsg(textGUI, "Pago eliminado definitivamente.");
+            else showMsg(textGUI, "No se pudo eliminar.");
+            conf.close();
+            reloadTable();
+        }));
+        pn.addComponent(new Button("No", conf::close));
+        conf.setComponent(pn);
+        textGUI.addWindowAndWait(conf);
+    }
+
+   
+    private Odontologo seleccionarOdontologo(WindowBasedTextGUI textGUI) {
+        final Window selWin = new BasicWindow("Seleccionar Odontólogo");
+        Panel p = new Panel(new GridLayout(1));
+
+        Table<String> t = new Table<>("#", "ID", "Nombre");
+        List<Odontologo> list = odontologoManager.listar();
+        for (int i = 0; i < list.size(); i++) {
+            Odontologo o = list.get(i);
+            t.getTableModel().addRow(String.valueOf(i+1), shortId(o.getID()), safe(o.getNombre()));
         }
+        if (t.getTableModel().getRowCount() > 0) t.setSelectedRow(0);
+
+        p.addComponent(t.withBorder(Borders.singleLine("Odontólogos")));
+
+        final Odontologo[] resultado = new Odontologo[1];
+        Panel actions = new Panel(new GridLayout(2));
+        actions.addComponent(new Button("Seleccionar", () -> {
+            int sel = t.getSelectedRow();
+            if (sel < 0 || sel >= list.size()) { showMsg(textGUI, "Seleccione un odontólogo."); return; }
+            resultado[0] = list.get(sel);
+            selWin.close();
+        }));
+        actions.addComponent(new Button("Cancelar", selWin::close));
+        p.addComponent(actions);
+
+        selWin.setComponent(p);
+        selWin.setHints(Arrays.asList(Window.Hint.CENTERED));
+        textGUI.addWindowAndWait(selWin);
+        return resultado[0];
     }
 
     // ---------- Helpers ----------
@@ -371,11 +345,22 @@ p.addComponent(new Button("Eliminar permanentemente", () -> {
     private static String shortId(String id) { if (id == null) return ""; return id.length() > 8 ? id.substring(0,8) : id; }
 
     private void showMsg(WindowBasedTextGUI textGUI, String msg) {
-        final Window w = new BasicWindow("Mensaje");
+        final Window m = new BasicWindow("Mensaje");
         Panel p = new Panel(new GridLayout(1));
         p.addComponent(new Label(msg));
-        p.addComponent(new Button("Cerrar", w::close));
-        w.setComponent(p);
-        textGUI.addWindowAndWait(w);
+        p.addComponent(new Button("Cerrar", m::close));
+        m.setComponent(p);
+        textGUI.addWindowAndWait(m);
     }
+public static void showScreen(WindowBasedTextGUI textGUI,
+                              PagosManager pagosManager,
+                              PacienteManager pacienteManager,
+                              OdontologoManager odontologoManager) {
+
+    new PagosScreen(pagosManager, pacienteManager, odontologoManager)
+            .show(textGUI, null);   // null = no queremos preseleccionar ningún pago
+}
+
+
+
 }

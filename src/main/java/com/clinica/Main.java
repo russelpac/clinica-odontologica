@@ -37,26 +37,26 @@ public class Main
 
         String url = "jdbc:sqlite:clinica.db";
 
-    // --- Abrir conexión una sola vez y crear managers ---
+    
         try (Connection conn = DriverManager.getConnection(url)) {
         // activar foreign keys
             try (Statement s = conn.createStatement()) {
             s.execute("PRAGMA foreign_keys = ON");
             }
 
-        // Crear managers compartidos
+       
             PacienteManager pacienteManager = new PacienteManager(conn);
             OdontologoManager odontologoManager = new OdontologoManager(conn);
             PagosManager pagosManager = new PagosManager(conn);
 
             if ("tui".equals(modo)) {
                 System.out.println("Iniciando TUI...");
-            // Inicia la interfaz TUI (lanterna). Esto bloqueará hasta que la TUI se cierre.
+            
                 TuiMain tui = new TuiMain(pacienteManager, odontologoManager, pagosManager);
                 tui.start();
                 System.out.println("TUI cerrada. Saliendo de la aplicación.");
             } else {
-            // --- Menú consola (usa los mismos managers) ---
+            
                 int opcion;
                 do { // ESTE SERA EL MENU PRINCIPAL
                     limpiarConsola();
@@ -75,7 +75,7 @@ public class Main
                     sc.nextLine();
                     switch (opcion) {
                         case 1: {
-                        // ya tenemos pacienteManager
+                        
                             menuPacientes(sc, pacienteManager);
                             break;
                         }
@@ -84,7 +84,7 @@ public class Main
                             break;
                         }
                         case 3: {
-                        // pagosManager, pacienteManager, odontologoManager existen
+                        
                             menuPagos(sc, pagosManager, pacienteManager, odontologoManager);
                             break;
                         }

@@ -39,12 +39,12 @@ public class RegistrarPagoScreen {
 
         root.addComponent(new Label("Seleccione paciente y odontólogo con las flechas (↑/↓). Use TAB para ir a botones y Enter para activar."));
 
-        // --- Panel central con dos tablas ---
+        
         Panel center = new Panel(new GridLayout(2));
 
         // Tabla pacientes (izquierda)
         Table<String> tablePac = new Table<>("#", "ID", "Nombre (CI)");
-        tablePac.setPreferredSize(new TerminalSize(56, 12));
+        tablePac.setPreferredSize(new TerminalSize(90, 16));
         List<Paciente> pacientes = pacienteManager.listar();
         for (int i = 0; i < pacientes.size(); i++) {
             Paciente px = pacientes.get(i);
@@ -58,7 +58,7 @@ public class RegistrarPagoScreen {
 
         // Tabla odontologos (derecha)
         Table<String> tableOd = new Table<>("#", "ID", "Nombre");
-        tableOd.setPreferredSize(new TerminalSize(56, 12));
+        tableOd.setPreferredSize(new TerminalSize(65, 12));
         List<Odontologo> odontologos = odontologoManager.listar();
         for (int i = 0; i < odontologos.size(); i++) {
             Odontologo ox = odontologos.get(i);

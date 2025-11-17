@@ -8,11 +8,12 @@ import com.clinica.modelos.Paciente;
 import java.time.DateTimeException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.Period;
 import java.util.UUID;
 
 /**
  * Formulario TUI para registrar paciente.
- * Replica el flujo de tu método de consola.
+ * Fecha de nacimiento obligatoria y validación estricta.
  */
 public class RegistrarPacienteScreen {
 
@@ -45,20 +46,20 @@ public class RegistrarPacienteScreen {
         form.addComponent(txtNumero);
 
         form.addComponent(new Label("Sexo:"));
-        TextBox txtSexo = new TextBox(new TerminalSize(5, 1));
+        TextBox txtSexo = new TextBox(new TerminalSize(10, 1));
         form.addComponent(txtSexo);
 
-        // Fecha (año/mes/dia) con validación similar al original
-        form.addComponent(new Label("Fecha Nac - Año:"));
+        // Fecha (año/mes/dia) - ahora obligatoria y validada estrictamente
+        form.addComponent(new Label("Fecha Nac - Año (yyyy) *:"));
         TextBox txtAnio = new TextBox(new TerminalSize(8, 1));
         form.addComponent(txtAnio);
 
-        form.addComponent(new Label("Fecha Nac - Mes:"));
-        TextBox txtMes = new TextBox(new TerminalSize(4, 1));
+        form.addComponent(new Label("Fecha Nac - Mes (1-12) *:"));
+        TextBox txtMes = new TextBox(new TerminalSize(8, 1));
         form.addComponent(txtMes);
 
-        form.addComponent(new Label("Fecha Nac - Día:"));
-        TextBox txtDia = new TextBox(new TerminalSize(4, 1));
+        form.addComponent(new Label("Fecha Nac - Día (1-31) *:"));
+        TextBox txtDia = new TextBox(new TerminalSize(8, 1));
         form.addComponent(txtDia);
 
         form.addComponent(new Label("Contacto de emergencias:"));
@@ -84,7 +85,7 @@ public class RegistrarPacienteScreen {
         // Botones
         Panel actions = new Panel(new GridLayout(3));
         Button btnGuardar = new Button("Guardar", () -> {
-            // Validaciones básicas como en consola
+            // Validaciones básicas
             String nombres = txtNombres.getText().trim();
             String apellidos = txtApellidos.getText().trim();
             String ci = txtCI.getText().trim();
@@ -94,33 +95,68 @@ public class RegistrarPacienteScreen {
                 return;
             }
 
-            // Validar fecha con lógica similar (loop en consola se reemplaza por validación explícita aquí)
-            LocalDate fechaNacimiento = null;
+            // Fecha obligatoria: los tres campos deben estar llenos
             String anioStr = txtAnio.getText().trim();
             String mesStr = txtMes.getText().trim();
             String diaStr = txtDia.getText().trim();
 
-            if (!anioStr.isEmpty() || !mesStr.isEmpty() || !diaStr.isEmpty()) {
-                try {
-                    int anio = Integer.parseInt(anioStr);
-                    int mes = Integer.parseInt(mesStr);
-                    int dia = Integer.parseInt(diaStr);
-                    fechaNacimiento = LocalDate.of(anio, mes, dia);
-                } catch (NumberFormatException nfe) {
-                    showMsg(textGUI, "Año/Mes/Día deben ser números. Revise la fecha.");
-                    return;
-                } catch (DateTimeException dte) {
-                    showMsg(textGUI, "Fecha inválida. Revise año/mes/día.");
-                    return;
-                }
-            } // si los tres campos quedan vacíos, dejamos fechaNacimiento = null (igual que en consola tras repetir)
+            if (anioStr.isEmpty() || mesStr.isEmpty() || diaStr.isEmpty()) {
+                showMsg(textGUI, "La fecha de nacimiento es obligatoria. Complete Año, Mes y Día.");
+                return;
+            }
 
-            // Generar ID igual que en consola
+            int anio, mes, dia;
+            try {
+                anio = Integer.parseInt(anioStr);
+                mes = Integer.parseInt(mesStr);
+                dia = Integer.parseInt(diaStr);
+            } catch (NumberFormatException nfe) {
+                showMsg(textGUI, "Año/Mes/Día deben ser números enteros. Revise la fecha.");
+                return;
+            }
+
+            // comprobaciones rápidas de rango para dar feedback más claro
+            if (mes < 1 || mes > 12) {
+                showMsg(textGUI, "Mes inválido. Debe estar entre 1 y 12.");
+                return;
+            }
+            if (dia < 1 || dia > 31) {
+                showMsg(textGUI, "Día inválido. Debe estar entre 1 y 31.");
+                return;
+            }
+
+            LocalDate fechaNacimiento;
+            try {
+                // LocalDate.of validará días por mes (ej. noviembre no tiene 31)
+                fechaNacimiento = LocalDate.of(anio, mes, dia);
+            } catch (DateTimeException dte) {
+                showMsg(textGUI, "Fecha inválida. Revise año/mes/día (ej. noviembre no tiene 31 días).");
+                return;
+            }
+
+            // No puede ser futura
+            LocalDate hoy = LocalDate.now();
+            if (fechaNacimiento.isAfter(hoy)) {
+                showMsg(textGUI, "Fecha de nacimiento no puede ser en el futuro.");
+                return;
+            }
+
+            // Limitar edad razonable (ej. <= 150 años)
+            int edad = Period.between(fechaNacimiento, hoy).getYears();
+            if (edad > 150) {
+                showMsg(textGUI, "Edad demasiado grande. Verifique la fecha de nacimiento.");
+                return;
+            }
+            if (edad < 0) {
+                showMsg(textGUI, "Fecha de nacimiento inválida.");
+                return;
+            }
+
+            // Generar ID
             String id = UUID.randomUUID().toString().replace("-", "").substring(0, 8);
-
             LocalDateTime fechaConsulta = LocalDateTime.now();
 
-            // Crear Paciente (ajusta orden si tu constructor es distinto)
+            // Crear Paciente
             Paciente nuevo = new Paciente(
                     id,
                     nombres,

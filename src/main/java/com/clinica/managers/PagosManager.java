@@ -197,4 +197,20 @@ public class PagosManager implements ICrud<Pagos>{
                 estado
         );
     }
+    //metodo agregado para la TUI
+    public boolean actualizarOdontologoPorId(String pagoId, String nuevoOdontologoId) {
+    String sql = "UPDATE pago SET odontologoID = ? WHERE ID = ?";
+    try (PreparedStatement ps = conn.prepareStatement(sql)) {
+        if (nuevoOdontologoId != null) ps.setString(1, nuevoOdontologoId);
+        else ps.setNull(1, Types.VARCHAR);
+        ps.setString(2, pagoId);
+        int filas = ps.executeUpdate();
+        return filas > 0;
+    } catch (SQLException e) {
+        System.err.println("Error al actualizar odontólogo del pago: " + e.getMessage());
+        e.printStackTrace();
+        return false;
+    }
+    }
+
 }
