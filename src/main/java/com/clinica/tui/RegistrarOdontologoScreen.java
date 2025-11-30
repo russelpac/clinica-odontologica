@@ -7,10 +7,7 @@ import com.clinica.modelos.Odontologo;
 
 import java.util.UUID;
 
-/**
- * Formulario TUI para registrar un nuevo odontólogo.
- * Replica el comportamiento de tu método de consola.
- */
+
 public class RegistrarOdontologoScreen {
 
     private final OdontologoManager odontologoManager;
@@ -50,7 +47,7 @@ public class RegistrarOdontologoScreen {
 
             String id = UUID.randomUUID().toString().replace("-", "").substring(0, 8);
 
-            // Ajusta el orden del constructor si en tu modelo es distinto
+            
             Odontologo nuevo = new Odontologo(
                     nombre,
                     numero,
@@ -78,7 +75,7 @@ public class RegistrarOdontologoScreen {
         w.setComponent(form);
         textGUI.addWindowAndWait(w);
     }
-
+//helpers
     private void showMsg(WindowBasedTextGUI textGUI, String msg) {
         final Window w = new BasicWindow("Mensaje");
         Panel p = new Panel(new GridLayout(1));

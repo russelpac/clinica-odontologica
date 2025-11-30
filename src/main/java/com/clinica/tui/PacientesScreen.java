@@ -11,10 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-/**
- * Pantalla para listar / ver / editar / eliminar pacientes usando Lanterna.
- * Versión robusta que mantiene currentIds para mapear filas a IDs reales.
- */
+
 public class PacientesScreen {
 
     private final PacienteManager pacienteManager;
@@ -28,7 +25,7 @@ public class PacientesScreen {
 
 
 public void show(WindowBasedTextGUI textGUI) {
-    // mantiene compatibilidad: llama a la nueva versión sin selección
+    
     show(textGUI, null);
 }
 
@@ -40,16 +37,16 @@ public void show(WindowBasedTextGUI textGUI, String selectId) {
     final Window window = new BasicWindow("Pacientes - Lista");
     Panel panel = new Panel(new GridLayout(1));
 
-    // instrucción de ayuda (opcional)
+    // instrucción de ayuda para el manejo de la TUI
     Label instrucciones = new Label("Use ↑/↓ para seleccionar, TAB para ir a botones y Enter para ejecutar.");
     panel.addComponent(instrucciones);
 
-    // tabla (recreamos la tabla para asegurar estado limpio por cada show)
+    // tabla que mostrara las columnas de los pacientes
     table = new Table<>("#", "ID", "Nombre", "CI", "Tel", "Activo");
     table.setPreferredSize(new TerminalSize(90, 20));
     reloadTable(); // rellena currentIds y la tabla
 
-    // Si se indicó selectId, buscar su índice y seleccionarlo
+    
     if (selectId != null) {
         int idx = -1;
         for (int i = 0; i < currentIds.size(); i++) {
@@ -62,7 +59,7 @@ public void show(WindowBasedTextGUI textGUI, String selectId) {
             } catch (Exception ignored) {}
         }
     } else {
-        // si no se indica selectId, intentamos dar foco a la tabla (mejor UX)
+        
         try {
             if (table.getTableModel().getRowCount() > 0) {
                 table.setSelectedRow(0); // seleccionar la primera por defecto
@@ -98,7 +95,7 @@ public void show(WindowBasedTextGUI textGUI, String selectId) {
             currentIds.add(p.getID()); // guardo el ID real en la misma posición que la fila
             table.getTableModel().addRow(
                     String.valueOf(idx),
-                    shortId(p.getID()), // mostramos ID corto en la tabla
+                    shortId(p.getID()), 
                     safe(p.getNombres()) + " " + safe(p.getApellidos()),
                     safe(p.getCI()),
                     safe(p.getNumeroContacto()),
@@ -116,9 +113,7 @@ public void show(WindowBasedTextGUI textGUI, String selectId) {
 
     // ---------- Acciones ----------
 
-    /**
-     * Devuelve el ID real de la fila seleccionada (si existe).
-     */
+    
     private Optional<String> selectedIdFromTable() {
         int selectedRow = table.getSelectedRow();
         if (selectedRow < 0) return Optional.empty();
@@ -141,10 +136,7 @@ public void show(WindowBasedTextGUI textGUI, String selectId) {
         w.setComponent(p);
         textGUI.addWindowAndWait(w);
     }
-    /**
- * Muestra submenú de acciones para la fila seleccionada:
- * Ver detalle, Editar, Eliminar, Volver.
- */
+    
 private void showActionsForSelectedRow(WindowBasedTextGUI textGUI) {
     Optional<String> maybeId = selectedIdFromTable();
     if (maybeId.isEmpty()) {
@@ -319,7 +311,7 @@ private void editById(String id, WindowBasedTextGUI textGUI) {
     textGUI.addWindowAndWait(w);
 }
 
-/** Eliminar por id (wrapper si lo quieres separado) */
+/** Eliminar por id  */
 private void deleteById(String id, WindowBasedTextGUI textGUI) {
     boolean ok = pacienteManager.eliminarPorId(id);
     if (ok) showMsg(textGUI, "Paciente anulado.");

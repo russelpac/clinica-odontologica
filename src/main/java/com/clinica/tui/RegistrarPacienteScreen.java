@@ -11,10 +11,7 @@ import java.time.LocalDateTime;
 import java.time.Period;
 import java.util.UUID;
 
-/**
- * Formulario TUI para registrar paciente.
- * Fecha de nacimiento obligatoria y validación estricta.
- */
+
 public class RegistrarPacienteScreen {
 
     private final PacienteManager pacienteManager;
@@ -193,7 +190,7 @@ public class RegistrarPacienteScreen {
         w.setComponent(form);
         textGUI.addWindowAndWait(w);
     }
-
+//helper
     private void showMsg(WindowBasedTextGUI textGUI, String msg) {
         final Window w = new BasicWindow("Mensaje");
         Panel p = new Panel(new GridLayout(1));

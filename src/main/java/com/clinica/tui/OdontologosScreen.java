@@ -10,10 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-/**
- * Pantalla para listar / ver / editar / eliminar odontólogos usando Lanterna.
- * Sigue el mismo patrón que PacientesScreen.
- */
+
 public class OdontologosScreen {
 
     private final OdontologoManager odontologoManager;
@@ -25,14 +22,11 @@ public class OdontologosScreen {
         this.currentIds = new ArrayList<>();
     }
 
-    /** Compatibilidad: muestra la lista sin seleccionar nada */
+    
     public void show(WindowBasedTextGUI textGUI) {
         show(textGUI, null);
     }
 
-    /**
-     * Muestra la lista de odontólogos. Si selectId != null intentará seleccionar ese ID.
-     */
     public void show(WindowBasedTextGUI textGUI, String selectId) {
         final Window window = new BasicWindow("Odontólogos - Lista");
         Panel panel = new Panel(new GridLayout(1));
@@ -80,9 +74,7 @@ public class OdontologosScreen {
         textGUI.addWindowAndWait(window);
     }
 
-    /**
-     * Rellena la tabla y currentIds en el mismo orden.
-     */
+
     private void reloadTable() {
         table.getTableModel().clear();
         currentIds.clear();
@@ -113,9 +105,7 @@ public class OdontologosScreen {
         return Optional.ofNullable(currentIds.get(selectedRow));
     }
 
-    /**
-     * Muestra submenú con acciones para la fila seleccionada.
-     */
+    
     private void showActionsForSelectedRow(WindowBasedTextGUI textGUI) {
         Optional<String> maybeId = selectedIdFromTable();
         if (maybeId.isEmpty()) {
@@ -215,7 +205,7 @@ public class OdontologosScreen {
             v = txtTel.getText().trim(); if (!v.isEmpty()) o.setNumeroCelular(v);
             v = txtEsp.getText().trim(); if (!v.isEmpty()) o.setEspecialidad(v);
 
-            odontologoManager.actualizarPorId(id, o); // en tu manager esto es void
+            odontologoManager.actualizarPorId(id, o); 
             showMsg(textGUI, "Odontólogo actualizado.");
             w.close();
         });

@@ -182,7 +182,7 @@ public class PagosScreen {
         cmbMetodo.setSelectedItem(p.getMetodo() != null ? p.getMetodo().toString() : "EFECTIVO");
         form.addComponent(cmbMetodo);
 
-        
+        //Estado
         form.addComponent(new Label("Estado:"));
         ComboBox<String> cmbEstado = new ComboBox<>();
         for (Pagos.EstadoPago e : Pagos.EstadoPago.values()) cmbEstado.addItem(e.toString());
@@ -358,7 +358,7 @@ public static void showScreen(WindowBasedTextGUI textGUI,
                               OdontologoManager odontologoManager) {
 
     new PagosScreen(pagosManager, pacienteManager, odontologoManager)
-            .show(textGUI, null);   // null = no queremos preseleccionar ningún pago
+            .show(textGUI, null);   
 }
 
 

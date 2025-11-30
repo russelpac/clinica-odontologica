@@ -15,9 +15,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
-/**
- * RegistrarPagoScreen usando Table (más compatible que ListBox si hay problemas de classpath).
- */
+
 public class RegistrarPagoScreen {
 
     private final PagosManager pagosManager;
@@ -42,7 +40,7 @@ public class RegistrarPagoScreen {
         
         Panel center = new Panel(new GridLayout(2));
 
-        // Tabla pacientes (izquierda)
+        // Tabla pacientes 
         Table<String> tablePac = new Table<>("#", "ID", "Nombre (CI)");
         tablePac.setPreferredSize(new TerminalSize(90, 16));
         List<Paciente> pacientes = pacienteManager.listar();
@@ -56,7 +54,7 @@ public class RegistrarPagoScreen {
         }
         if (tablePac.getTableModel().getRowCount() > 0) tablePac.setSelectedRow(0);
 
-        // Tabla odontologos (derecha)
+        // Tabla odontologos 
         Table<String> tableOd = new Table<>("#", "ID", "Nombre");
         tableOd.setPreferredSize(new TerminalSize(65, 12));
         List<Odontologo> odontologos = odontologoManager.listar();
@@ -74,7 +72,7 @@ public class RegistrarPagoScreen {
         center.addComponent(new Panel().addComponent(new Label("Odontólogos:")).addComponent(tableOd.withBorder(Borders.singleLine("Odontólogos"))));
         root.addComponent(center);
 
-        // --- Panel inferior: monto, metodo y botones ---
+        
         Panel bottom = new Panel(new GridLayout(2));
 
         bottom.addComponent(new Label("Monto (ej. 150.50):"));
@@ -88,10 +86,10 @@ public class RegistrarPagoScreen {
         metodoList.setSelectedIndex(0);
         bottom.addComponent(metodoList);
 
-        // botones
+        
         Panel actions = new Panel(new GridLayout(3));
         Button btnGuardar = new Button("Guardar", () -> {
-            // validaciones
+            
             if (tablePac.getTableModel().getRowCount() == 0) { showMsg(textGUI, "No hay pacientes."); return; }
             if (tableOd.getTableModel().getRowCount() == 0) { showMsg(textGUI, "No hay odontólogos."); return; }
 
