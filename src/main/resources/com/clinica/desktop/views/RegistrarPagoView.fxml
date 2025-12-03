@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane xmlns="http://javafx.com/javafx"
+            xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.clinica.desktop.controllers.RegistrarPagoController">
+
+    <!-- ───────── CENTER: Tablas ───────── -->
+    <center>
+        <GridPane hgap="20" vgap="15">
+            <padding>
+                <Insets top="20" right="20" bottom="20" left="20"/>
+            </padding>
+
+            <!-- Tabla Pacientes -->
+            <VBox GridPane.rowIndex="0" GridPane.columnIndex="0">
+                <Label text="Pacientes:" style="-fx-font-size: 14px; -fx-font-weight: bold;" />
+                <TableView fx:id="tablaPacientes" prefHeight="250" prefWidth="450">
+                    <columns>
+                        <TableColumn fx:id="colPacID" text="ID" prefWidth="100"/>
+                        <TableColumn fx:id="colPacNombre" text="Nombre" prefWidth="350"/>
+                    </columns>
+                </TableView>
+            </VBox>
+
+            <!-- Tabla Odontólogos -->
+            <VBox GridPane.rowIndex="0" GridPane.columnIndex="1">
+                <Label text="Odontólogos:" style="-fx-font-size: 14px; -fx-font-weight: bold;" />
+                <TableView fx:id="tablaOdontologos" prefHeight="250" prefWidth="350">
+                    <columns>
+                        <TableColumn fx:id="colOdoID" text="ID" prefWidth="120"/>
+                        <TableColumn fx:id="colOdoNombre" text="Nombre" prefWidth="250"/>
+                    </columns>
+                </TableView>
+            </VBox>
+
+            <!-- Monto -->
+            <Label text="Monto:" GridPane.rowIndex="1" GridPane.columnIndex="0"/>
+            <TextField fx:id="txtMonto" GridPane.rowIndex="1" GridPane.columnIndex="1"/>
+
+            <!-- Método de pago -->
+            <Label text="Método de Pago:" GridPane.rowIndex="2" GridPane.columnIndex="0"/>
+            <HBox spacing="20" GridPane.rowIndex="2" GridPane.columnIndex="1">
+                <RadioButton fx:id="rbEfectivo" text="Efectivo" toggleGroup="$grupoMetodo"/>
+                <RadioButton fx:id="rbTransferencia" text="Transferencia" toggleGroup="$grupoMetodo"/>
+            </HBox>
+
+        </GridPane>
+    </center>
+
+    <!-- ───────── BOTTOM: Botones ───────── -->
+    <bottom>
+        <HBox alignment="center" spacing="30">
+            <padding>
+                <Insets top="20" right="20" bottom="20" left="20"/>
+            </padding>
+            <Button text="Guardar" fx:id="btnGuardar" onAction="#guardarPago"
+                    style="-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-font-weight: bold;"/>
+            <Button text="Cancelar" fx:id="btnCancelar" onAction="#cancelar"
+                    style="-fx-background-color: #d9534f; -fx-text-fill: white; -fx-font-weight: bold;"/>
+        </HBox>
+    </bottom>
+
+</BorderPane>

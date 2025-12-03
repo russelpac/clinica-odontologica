@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane xmlns="http://javafx.com/javafx"
+            xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.clinica.desktop.controllers.ListarPagosController">
+
+    <center>
+        <VBox spacing="15" >
+            <padding>
+                <Insets top="20" right="20" bottom="20" left="20"/>
+            </padding>
+            
+
+            <Label text="Listado de Pagos"
+                   style="-fx-font-size: 18; -fx-font-weight: bold;" />
+
+            <TableView fx:id="tablaPagos" prefHeight="350">
+                <columns>
+                    <TableColumn fx:id="colID" text="ID" prefWidth="80"/>
+                    <TableColumn fx:id="colPaciente" text="Paciente" prefWidth="120"/>
+                    <TableColumn fx:id="colOdontologo" text="Odontólogo" prefWidth="120"/>
+                    <TableColumn fx:id="colFecha" text="Fecha" prefWidth="130"/>
+                    <TableColumn fx:id="colMonto" text="Monto" prefWidth="100"/>
+                    <TableColumn fx:id="colMetodo" text="Método" prefWidth="120"/>
+                    <TableColumn fx:id="colEstado" text="Estado" prefWidth="100"/>
+                </columns>
+            </TableView>
+
+        </VBox>
+    </center>
+
+    <bottom>
+        <HBox spacing="20" alignment="center" >
+            <padding>
+                <Insets top="20" right="20" bottom="20" left="20"/>
+            </padding>
+
+            <Button text="Editar" onAction="#editarPago"/>
+            <Button text="Anular" onAction="#anularPago"/>
+
+        </HBox>
+    </bottom>
+
+</BorderPane>
+

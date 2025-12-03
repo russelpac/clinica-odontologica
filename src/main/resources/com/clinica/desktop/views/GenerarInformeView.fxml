@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+
+<BorderPane xmlns="http://javafx.com/javafx"
+            xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.clinica.desktop.controllers.GenerarInformeController">
+
+    <center>
+        <VBox spacing="15" alignment="CENTER">
+            <padding>
+                <Insets top="20" right="20" bottom="20" left="20"/>
+            </padding>
+
+            <Label text="Ruta de salida del PDF:"/>
+            <TextField fx:id="txtRuta" prefWidth="300" text="reports/pacientes.pdf"/>
+
+        </VBox>
+    </center>
+
+    <bottom>
+        <HBox spacing="20" alignment="CENTER">
+            <padding>
+                <Insets top="15" bottom="15"/>
+            </padding>
+
+            <Button text="Generar" onAction="#generarPDF"/>
+            <Button text="Cancelar" onAction="#cancelar"/>
+        </HBox>
+    </bottom>
+
+</BorderPane>

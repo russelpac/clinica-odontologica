@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane xmlns="http://javafx.com/javafx"
+            xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.clinica.desktop.controllers.EditarOdontologoController">
+
+    <center>
+        <GridPane hgap="15" vgap="12">
+            <padding>
+                <Insets top="20" right="20" bottom="20" left="20"/>
+            </padding>
+
+            <Label text="ID:" GridPane.rowIndex="0" GridPane.columnIndex="0"/>
+            <Label fx:id="lblId" GridPane.rowIndex="0" GridPane.columnIndex="1"/>
+
+            <Label text="Nombre:" GridPane.rowIndex="1" GridPane.columnIndex="0"/>
+            <TextField fx:id="txtNombre" GridPane.rowIndex="1" GridPane.columnIndex="1"/>
+
+            <Label text="Celular:" GridPane.rowIndex="2" GridPane.columnIndex="0"/>
+            <TextField fx:id="txtCelular" GridPane.rowIndex="2" GridPane.columnIndex="1"/>
+
+            <Label text="Especialidad:" GridPane.rowIndex="3" GridPane.columnIndex="0"/>
+            <TextField fx:id="txtEspecialidad" GridPane.rowIndex="3" GridPane.columnIndex="1"/>
+        </GridPane>
+    </center>
+
+    <bottom>
+        <HBox alignment="center" spacing="20">
+            <padding>
+                <Insets top="15" right="15" bottom="15" left="15"/>
+            </padding>
+
+            <Button text="Guardar" onAction="#guardarCambios"/>
+            <Button text="Cancelar" onAction="#cancelar"/>
+        </HBox>
+    </bottom>
+
+</BorderPane>

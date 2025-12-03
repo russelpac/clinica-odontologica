@@ -38,7 +38,7 @@ public class ListarPacientesController {
 
     @FXML
     public void initialize() {
-        // vinculación simple (si prefieres usar PropertyValueFactory)
+        
         colID.setCellValueFactory(c -> new javafx.beans.property.SimpleStringProperty(c.getValue().getID()));
         colNombres.setCellValueFactory(c -> new javafx.beans.property.SimpleStringProperty(c.getValue().getNombres()));
         colApellidos.setCellValueFactory(c -> new javafx.beans.property.SimpleStringProperty(c.getValue().getApellidos()));
@@ -47,7 +47,7 @@ public class ListarPacientesController {
         colContacto.setCellValueFactory(c -> new javafx.beans.property.SimpleStringProperty(c.getValue().getNumeroContacto()));
         colActivo.setCellValueFactory(c -> new javafx.beans.property.SimpleBooleanProperty(c.getValue().isActivo()));
 
-        // configurar la columna de acciones (compatible con Java 8)
+        
         colAcciones.setCellFactory(new Callback<TableColumn<Paciente, Void>, TableCell<Paciente, Void>>() {
             @Override
             public TableCell<Paciente, Void> call(final TableColumn<Paciente, Void> param) {

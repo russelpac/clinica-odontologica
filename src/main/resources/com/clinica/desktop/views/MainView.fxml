@@ -28,9 +28,21 @@
                     onAction="#abrirRegistrarOdontologo"
                     prefWidth="160"/>
 
-            <!--Button text="Listar Odontólogos"
+            <Button text="Listar Odontólogos"
                     onAction="#abrirListadoOdontologos"
-                    prefWidth="160"/-->
+                    prefWidth="160"/>
+            <Button text="Generar Informe PDF"
+                    onAction="#abrirGenerarInformePDF"
+                    prefWidth="160"/>
+            <Button text="Registrar Pago"
+                    onAction="#abrirRegistrarPago"
+                    prefWidth="160"/>
+            <Button text="Listar Pagos"
+                    onAction="#abrirListadoPagos"
+                    prefWidth="160"/>
+
+
+
         </VBox>
     </left>
 
