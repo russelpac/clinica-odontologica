@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane xmlns="http://javafx.com/javafx"
+            xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.clinica.desktop.controllers.ListarPacientesController">
+
+    <top>
+        <Label text="Listado de Pacientes"
+               style="-fx-font-size: 22px; -fx-padding: 10;"/>
+    </top>
+
+    <center>
+        <TableView fx:id="tablaPacientes">
+            <columns>
+                <TableColumn fx:id="colID" text="ID" prefWidth="100"/>
+                <TableColumn fx:id="colNombres" text="Nombres" prefWidth="150"/>
+                <TableColumn fx:id="colApellidos" text="Apellidos" prefWidth="150"/>
+                <TableColumn fx:id="colCI" text="CI" prefWidth="100"/>
+                <TableColumn fx:id="colSexo" text="Sexo" prefWidth="80"/>
+                <TableColumn fx:id="colContacto" text="Teléfono" prefWidth="120"/>
+                <TableColumn fx:id="colActivo" text="Activo" prefWidth="80"/>
+                <TableColumn fx:id="colAcciones" text="Acciones" prefWidth="160"/>
+
+
+
+
+            </columns>
+        </TableView>
+    </center>
+
+    <bottom>
+        <Button text="Volver"
+                onAction="#volver"
+                style="-fx-padding: 10; -fx-font-size: 14px;"
+                BorderPane.alignment="CENTER"/>
+    </bottom>
+
+</BorderPane>
+
+

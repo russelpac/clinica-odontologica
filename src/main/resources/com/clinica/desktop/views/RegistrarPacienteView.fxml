@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane xmlns="http://javafx.com/javafx"
+            xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.clinica.desktop.controllers.RegistrarPacienteController">
+
+    <center>
+        <GridPane hgap="10" vgap="10">
+            <padding>
+                <Insets top="20" right="20" bottom="20" left="20"/>
+            </padding>
+
+            <Label text="CI:" GridPane.rowIndex="0" GridPane.columnIndex="2"/>
+            <TextField fx:id="txtCI" GridPane.rowIndex="0" GridPane.columnIndex="3"/>
+
+            <Label text="Nombres:" GridPane.rowIndex="1" GridPane.columnIndex="0"/>
+            <TextField fx:id="txtNombres" GridPane.rowIndex="1" GridPane.columnIndex="1"/>
+
+            <Label text="Apellidos:" GridPane.rowIndex="1" GridPane.columnIndex="2"/>
+            <TextField fx:id="txtApellidos" GridPane.rowIndex="1" GridPane.columnIndex="3"/>
+
+            <Label text="Número contacto:" GridPane.rowIndex="2" GridPane.columnIndex="0"/>
+            <TextField fx:id="txtNumero" GridPane.rowIndex="2" GridPane.columnIndex="1"/>
+
+            <Label text="Fecha nacimiento:" GridPane.rowIndex="2" GridPane.columnIndex="2"/>
+            <DatePicker fx:id="dateNacimiento" GridPane.rowIndex="2" GridPane.columnIndex="3"/>
+
+            <Label text="Sexo:" GridPane.rowIndex="3" GridPane.columnIndex="0"/>
+            <ComboBox fx:id="comboSexo" GridPane.rowIndex="3" GridPane.columnIndex="1"/>
+
+            <Label text="Alergias:" GridPane.rowIndex="4" GridPane.columnIndex="0"/>
+            <TextField fx:id="txtAlergias" GridPane.rowIndex="4" GridPane.columnIndex="1"/>
+
+            <Label text="Consultas:" GridPane.rowIndex="4" GridPane.columnIndex="2"/>
+            <TextField fx:id="txtConsultas" GridPane.rowIndex="4" GridPane.columnIndex="3"/>
+
+            <Label text="Contacto emergencia:" GridPane.rowIndex="5" GridPane.columnIndex="0"/>
+            <TextField fx:id="txtEmergencias" GridPane.rowIndex="5" GridPane.columnIndex="1"/>
+
+            <Label text="Dirección:" GridPane.rowIndex="5" GridPane.columnIndex="2"/>
+            <TextField fx:id="txtDireccion" GridPane.rowIndex="5" GridPane.columnIndex="3"/>
+
+            <Label text="Antecedentes médicos:" GridPane.rowIndex="6" GridPane.columnIndex="0"/>
+            <TextArea fx:id="txtAntecedentes" prefRowCount="3"
+                      GridPane.rowIndex="6" GridPane.columnIndex="1"
+                      GridPane.columnSpan="3"/>
+        </GridPane>
+    </center>
+
+    <bottom>
+        <HBox spacing="10" alignment="center">
+            <padding>
+                <Insets top="20" right="20" bottom="20" left="20"/>
+            </padding>
+
+            <Button fx:id="btnGuardar" text="Guardar"/>
+            <Button fx:id="btnCancelar" text="Cancelar"/>
+        </HBox>
+    </bottom>
+
+</BorderPane>
+

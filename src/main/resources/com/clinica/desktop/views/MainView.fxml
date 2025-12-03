@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+
+<BorderPane xmlns="http://javafx.com/javafx"
+            xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.clinica.desktop.controllers.MainController">
+
+    <!-- Panel lateral de los botones -->
+    <left>
+        <VBox spacing="15" style="-fx-background-color: #E3E3E3;" prefWidth="200">
+            <padding>
+                <Insets top="20" left="20" right="20" bottom="20"/>
+            </padding>
+
+            <Label text="Menú Principal" style="-fx-font-size: 18px; -fx-font-weight: bold;"/>
+
+            <Button text="Registrar Paciente"
+                    onAction="#abrirRegistrarPaciente"
+                    prefWidth="160"/>
+
+            <Button text="Listar Pacientes"
+                    onAction="#abrirListadoPacientes"
+                    prefWidth="160"/>
+            <Button text="Registrar Odontólogo"
+                    onAction="#abrirRegistrarOdontologo"
+                    prefWidth="160"/>
+
+            <!--Button text="Listar Odontólogos"
+                    onAction="#abrirListadoOdontologos"
+                    prefWidth="160"/-->
+        </VBox>
+    </left>
+
+    <!-- Parte central(insertareemos el logo de la clinica) -->
+    <center>
+        <StackPane>
+            <Label text="Clínica Odontológica"
+                   style="-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #444;"/>
+        </StackPane>
+    </center>
+
+</BorderPane>
+
